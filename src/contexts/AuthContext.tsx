@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import type { User as SupabaseUser, Session, AuthError } from '@supabase/supabase-js'
+import type { User as SupabaseUser, Session, AuthError, AuthChangeEvent } from '@supabase/supabase-js'
 import { supabase, isDemo } from '@/services/supabase'
 import type { User } from '@/types/database'
 
@@ -149,7 +149,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (event: AuthChangeEvent, session: Session | null) => {
         if (!mounted) return
 
         let userProfile: User | null = null

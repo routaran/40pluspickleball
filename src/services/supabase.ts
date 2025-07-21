@@ -11,26 +11,51 @@ if (isDemo) {
   console.warn('Authentication and database features will show demo content')
 }
 
-// Use demo values if environment variables aren't set
-const url = supabaseUrl || 'https://demo.supabase.co'
-const key = supabaseKey || 'demo-key'
+// Create a safe Supabase client that works in demo mode
+let supabase: any
 
-export const supabase = createClient(url, key, {
-  auth: {
-    // Configure 30-day session duration as per PRD requirements
-    storage: window.localStorage,
-    storageKey: '40plus-pickleball-auth',
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true
-  },
-  // Configure for production use
-  realtime: {
-    params: {
-      eventsPerSecond: 10,
+if (isDemo) {
+  // Create a mock client for demo mode
+  supabase = {
+    auth: {
+      getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+      getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+      signInWithPassword: () => Promise.resolve({ error: { message: 'Demo mode - authentication not available' } }),
+      signInWithOtp: () => Promise.resolve({ error: { message: 'Demo mode - magic link not available' } }),
+      signUp: () => Promise.resolve({ error: { message: 'Demo mode - registration not available' } }),
+      signOut: () => Promise.resolve({ error: null }),
+      updateUser: () => Promise.resolve({ error: { message: 'Demo mode - user updates not available' } }),
+      onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } })
     },
-  },
-})
+    from: () => ({
+      select: () => ({ 
+        eq: () => ({ 
+          single: () => Promise.resolve({ data: null, error: { message: 'Demo mode - database queries not available' } }) 
+        }) 
+      })
+    })
+  }
+} else {
+  // Use real Supabase client with actual credentials
+  supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: {
+      // Configure 30-day session duration as per PRD requirements
+      storage: window.localStorage,
+      storageKey: '40plus-pickleball-auth',
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true
+    },
+    // Configure for production use
+    realtime: {
+      params: {
+        eventsPerSecond: 10,
+      },
+    },
+  })
+}
+
+export { supabase }
 
 // Export demo flag for components to show appropriate demo content
 export { isDemo }
