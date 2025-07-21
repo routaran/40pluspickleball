@@ -74,7 +74,7 @@ CREATE TABLE players (
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     
     -- Ensure unique players by name (can have multiple Johns, but not exact duplicates)
-    UNIQUE(name, COALESCE(email, ''), COALESCE(phone, ''))
+    -- Note: Unique constraint will be added as functional index below
 );
 
 -- =====================================================
@@ -188,6 +188,9 @@ CREATE TABLE match_scores (
 CREATE INDEX idx_events_event_date ON events(event_date);
 CREATE INDEX idx_events_status ON events(status);
 CREATE INDEX idx_events_created_by ON events(created_by);
+
+-- Unique constraint for players using functional index (handles COALESCE for nullable fields)
+CREATE UNIQUE INDEX idx_players_unique_identity ON players(name, COALESCE(email, ''), COALESCE(phone, ''));
 
 CREATE INDEX idx_event_players_event_id ON event_players(event_id);
 CREATE INDEX idx_event_players_player_id ON event_players(player_id);
