@@ -940,9 +940,75 @@ The application's requirements are fully met by Supabase's integrated platform:
 
 ## 7. Constraints & Limitations
 ### 7.1 Technical Constraints
-- Client-side only execution (GitHub Pages limitation)
-- Static hosting constraints
-- Browser compatibility requirements
+
+#### Client-side Execution Constraints
+- All business logic must execute in the browser (pairing algorithms, standings calculations, schedule generation)
+- No server-side processing available for computationally intensive operations
+- Algorithm performance must scale efficiently for worst-case scenarios (16 players, 10+ rounds)
+- Memory management critical for batch operations (generating matches for entire event)
+- Limited to JavaScript's single-threaded execution model
+
+#### Static Hosting Limitations (GitHub Pages)
+- No server-side rendering or dynamic HTML generation
+- No custom backend endpoints, middleware, or API proxies
+- All API calls must originate directly from browser to Supabase
+- No server-side caching mechanisms or CDN configuration control
+- Build artifacts limited to static files (HTML, CSS, JS, assets)
+- URL structure constrained by static file paths
+
+#### Browser Compatibility & Performance
+- **Mobile Browser Support Required:**
+  - iOS Safari 14+ (primary mobile platform)
+  - Chrome Mobile 90+ (Android devices)
+  - Must handle touch interactions for score entry
+  - Responsive design mandatory for 375px-428px viewports
+- **Desktop Browser Support:**
+  - Chrome 90+, Firefox 88+, Safari 14+, Edge 90+
+  - Print functionality must work consistently across browsers
+- **Storage Limitations:**
+  - LocalStorage limited to ~10MB per origin
+  - SessionStorage cleared on tab close
+  - No access to filesystem for data persistence
+
+#### Security Constraints
+- Supabase anon key exposed in client-side code (secured by Row Level Security)
+- No server-side validation layer (must rely entirely on database constraints and RLS)
+- Authentication tokens stored in browser storage (vulnerable to XSS if not careful)
+- CORS restrictions for any third-party API integrations
+- All security must be enforced at database level via Supabase RLS policies
+
+**Row Level Security (RLS) Protection:**
+The exposed anon key is secured through comprehensive RLS policies that ensure:
+- **Read-only access** for anonymous users (view events, players, matches, scores)
+- **No write access** without authentication (cannot create/modify/delete any data)
+- **Ownership-based access** for authenticated users (can only modify their own events)
+- **Role-based restrictions** for sensitive data (error logs, email queue require admin role)
+- **Hard delete prevention** across all tables (data integrity maintained)
+
+See migration `004_security_hardening.sql` for complete security implementation.
+
+#### Network & Connectivity Requirements
+- Constant internet connection required (no offline capability)
+- No data synchronization or conflict resolution for offline edits
+- Real-time features require stable WebSocket connections
+- Network latency directly impacts user experience
+- No request queuing or retry mechanisms at server level
+- Bandwidth considerations for real-time subscriptions with multiple concurrent users
+
+#### Data Processing Limitations
+- Complex queries (standings with tiebreakers) must execute efficiently in browser
+- Large dataset operations limited by browser memory (though 16 players is well within limits)
+- No background workers for long-running calculations
+- CSV export and print formatting must be handled client-side
+- Image processing (if ever needed) limited to browser capabilities
+
+#### Development & Deployment Constraints
+- Build process must output only static files
+- No server environment variables (must use build-time substitution)
+- No server logs or monitoring (only client-side error tracking possible)
+- Deployment limited to GitHub Pages features and limitations
+- No A/B testing or feature flags at server level
+- Version rollbacks require new deployments
 
 ### 7.2 Budget Constraints
 [Cost considerations for services]
