@@ -429,7 +429,7 @@ SELECT
         PARTITION BY event_id 
         ORDER BY 
             wins DESC,
-            point_differential DESC,
+            points_for - points_against DESC,
             points_for DESC
     ) as ranking
 FROM player_results
@@ -525,10 +525,14 @@ CREATE POLICY "No user deletion" ON users
 
 -- Authenticated users (organizers) can manage their own events
 CREATE POLICY "Organizers can create events" ON events
-    FOR INSERT WITH CHECK (auth.uid() = created_by);
+    FOR INSERT WITH CHECK (
+        created_by = (SELECT id FROM users WHERE auth_id = auth.uid())
+    );
 
 CREATE POLICY "Organizers can update their own events" ON events
-    FOR UPDATE USING (auth.uid() = created_by);
+    FOR UPDATE USING (
+        created_by = (SELECT id FROM users WHERE auth_id = auth.uid())
+    );
 
 -- Prevent event deletion
 CREATE POLICY "No event deletion" ON events
@@ -539,7 +543,7 @@ CREATE POLICY "Organizers can manage players in their events" ON event_players
         EXISTS (
             SELECT 1 FROM events 
             WHERE events.id = event_players.event_id 
-            AND events.created_by = auth.uid()
+            AND events.created_by = (SELECT id FROM users WHERE auth_id = auth.uid())
         )
     );
 
@@ -552,7 +556,7 @@ CREATE POLICY "Organizers can manage rounds in their events" ON rounds
         EXISTS (
             SELECT 1 FROM events 
             WHERE events.id = rounds.event_id 
-            AND events.created_by = auth.uid()
+            AND events.created_by = (SELECT id FROM users WHERE auth_id = auth.uid())
         )
     );
 
@@ -565,7 +569,7 @@ CREATE POLICY "Organizers can manage matches in their events" ON matches
         EXISTS (
             SELECT 1 FROM events 
             WHERE events.id = matches.event_id 
-            AND events.created_by = auth.uid()
+            AND events.created_by = (SELECT id FROM users WHERE auth_id = auth.uid())
         )
     );
 
@@ -579,7 +583,7 @@ CREATE POLICY "Organizers can manage match players in their events" ON match_pla
             SELECT 1 FROM matches m
             JOIN events e ON m.event_id = e.id 
             WHERE m.id = match_players.match_id 
-            AND e.created_by = auth.uid()
+            AND e.created_by = (SELECT id FROM users WHERE auth_id = auth.uid())
         )
     );
 
@@ -593,7 +597,7 @@ CREATE POLICY "Organizers can manage scores in their events" ON match_scores
             SELECT 1 FROM matches m
             JOIN events e ON m.event_id = e.id 
             WHERE m.id = match_scores.match_id 
-            AND e.created_by = auth.uid()
+            AND e.created_by = (SELECT id FROM users WHERE auth_id = auth.uid())
         )
     );
 
@@ -606,7 +610,7 @@ CREATE POLICY "Only admins can view error logs" ON error_logs
     FOR SELECT USING (
         EXISTS (
             SELECT 1 FROM users 
-            WHERE users.id = auth.uid() 
+            WHERE users.auth_id = auth.uid() 
             AND users.role = 'admin'
         )
     );
@@ -624,7 +628,7 @@ CREATE POLICY "Only admins can view email queue" ON email_queue
     FOR SELECT USING (
         EXISTS (
             SELECT 1 FROM users 
-            WHERE users.id = auth.uid() 
+            WHERE users.auth_id = auth.uid() 
             AND users.role = 'admin'
         )
     );
