@@ -11,7 +11,7 @@ This directory contains the PostgreSQL database schema for the 40+ Pickleball ro
 - Matches store the actual court assignment directly (no translation needed)
 
 ### Core Tables
-1. **users** - Organizers/admins who manage events
+1. **users** - Organizers/admins who manage events (integrated with Supabase Auth)
 2. **events** - Single-day round robin tournaments with court configurations
 3. **players** - Participants (not authenticated users)
 4. **event_players** - Players registered for each event
@@ -19,6 +19,9 @@ This directory contains the PostgreSQL database schema for the 40+ Pickleball ro
 6. **matches** - Individual games with court assignments
 7. **match_players** - Players/teams in each match
 8. **match_scores** - Match results
+9. **error_logs** - System error tracking with admin notifications
+10. **email_queue** - Pending email notifications for admins
+11. **public_events** (view) - Privacy-safe view of events for public access
 
 ### Key Features
 - UUID primary keys for all tables
@@ -27,9 +30,11 @@ This directory contains the PostgreSQL database schema for the 40+ Pickleball ro
 - Views for standings and match details
 - Automatic timestamp updates
 - Support for player departures and match regeneration
+- Integration with Supabase Auth for magic link authentication
+- Privacy protection via public_events view
 
 ## Schema Version
-Current Version: **1.1** (includes PRD alignment updates)
+Current Version: **1.3** (includes auth integration and privacy enhancements)
 
 ## Deployment Instructions
 
@@ -60,10 +65,10 @@ supabase db push schema.sql
 psql -h db.your-project-ref.supabase.co -p 5432 -d postgres -U postgres -f schema.sql
 ```
 
-### For Existing Databases (Upgrading from v1.0 to v1.1)
+### For Existing Databases
 
-If you have an existing database with version 1.0, run the migration script:
-
+#### Upgrading from v1.0 to v1.1
+If you have an existing database with version 1.0:
 ```bash
 # Via Supabase Dashboard
 # Copy contents of migrations/001_prd_alignment_updates.sql and run in SQL Editor
@@ -75,13 +80,41 @@ supabase db push migrations/001_prd_alignment_updates.sql
 psql -h db.your-project-ref.supabase.co -p 5432 -d postgres -U postgres -f migrations/001_prd_alignment_updates.sql
 ```
 
+#### Upgrading from v1.1 to v1.2
+To add error logging and email notifications:
+```bash
+# Via Supabase Dashboard
+# Copy contents of migrations/002_error_logging_with_notifications.sql and run in SQL Editor
+
+# Via Supabase CLI
+supabase db push migrations/002_error_logging_with_notifications.sql
+
+# Via Direct PostgreSQL
+psql -h db.your-project-ref.supabase.co -p 5432 -d postgres -U postgres -f migrations/002_error_logging_with_notifications.sql
+```
+
+#### Upgrading from v1.2 to v1.3
+To add auth integration and privacy enhancements:
+```bash
+# Via Supabase Dashboard
+# Copy contents of migrations/003_auth_integration_and_privacy.sql and run in SQL Editor
+
+# Via Supabase CLI
+supabase db push migrations/003_auth_integration_and_privacy.sql
+
+# Via Direct PostgreSQL
+psql -h db.your-project-ref.supabase.co -p 5432 -d postgres -U postgres -f migrations/003_auth_integration_and_privacy.sql
+```
+
 See `migrations/README.md` for detailed migration information.
 
 ## Post-Deployment Steps
 
 1. **Enable Authentication**
-   - Set up Supabase Auth for organizer login
-   - Configure email authentication or OAuth providers
+   - Enable Email Auth in Supabase Dashboard
+   - Configure magic link authentication settings
+   - Customize email templates for your branding
+   - Set authentication rate limits as needed
 
 2. **Configure Storage** (if needed for future features)
    - Create buckets for event documents or player photos
@@ -146,9 +179,71 @@ FROM events
 WHERE id = 'your-event-id';
 ```
 
+## Error Logging and Notifications
+
+### Error Tracking
+The system includes comprehensive error logging:
+- All errors are logged to the `error_logs` table
+- Errors include type (auth/api/validation/system), message, stack trace, and context
+- Admin users can view error logs through the application
+- Errors can be marked as resolved
+
+### Email Notifications
+When an error occurs:
+1. A trigger automatically creates an entry in the `email_queue` table
+2. The queue entry contains the recipient email (admin or organizer)
+3. To send actual emails, you need to:
+   - Create a Supabase Edge Function to process the queue
+   - Configure an email service (SendGrid, Resend, etc.)
+   - OR use Database Webhooks to call an external service
+
+### Viewing Error Logs
+```sql
+-- View recent errors
+SELECT 
+    error_type,
+    error_message,
+    created_at,
+    resolved
+FROM error_logs
+WHERE created_at > NOW() - INTERVAL '7 days'
+ORDER BY created_at DESC;
+
+-- View pending email notifications
+SELECT 
+    to_email,
+    subject,
+    created_at,
+    attempts
+FROM email_queue
+WHERE sent = false
+ORDER BY created_at;
+
+-- View public events (safe for unauthenticated users)
+SELECT * FROM public_events
+WHERE event_date >= CURRENT_DATE
+ORDER BY event_date, start_time;
+```
+
+## Privacy and Security
+
+### Using the Public Events View
+When building your application:
+- **Unauthenticated users**: Query `public_events` view instead of `events` table
+- **Authenticated organizers**: Can query `events` table directly
+- This protects organizer email addresses from public exposure
+
+### Authentication Flow
+1. Organizers sign up/log in using magic links (no passwords)
+2. Supabase sends a login link to their email
+3. Clicking the link authenticates them
+4. The `users.auth_id` links to Supabase's auth system
+
 ## Notes
 
 - The schema includes sample data at the bottom - remove for production
 - All timestamps are stored in UTC
 - Courts are validated client-side to ensure they exist in the event's court array
 - The system supports both singles and doubles matches (controlled by position in match_players)
+- Error logs require admin role to view (enforced by RLS)
+- Email queue is processed by external services (Edge Functions or webhooks)

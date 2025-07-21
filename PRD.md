@@ -340,6 +340,18 @@ A web application designed to organize and manage single-day pickleball round ro
 - player_id (FK, primary key)
 - Various totals and calculated fields (win percentage, point differential)
 
+**error_logs** - System error tracking for administrator monitoring
+- id (UUID, primary key)
+- error_type (auth/api/validation/system)
+- error_message
+- stack_trace
+- user_id (FK to users, nullable)
+- event_id (FK to events, nullable)
+- browser_info (JSONB with user agent, platform, etc.)
+- created_at
+- resolved (boolean, default false)
+- resolved_at, resolved_by (FK to users)
+
 #### Data Integrity Rules
 
 1. **Immutable Completed Matches**: Matches with recorded scores cannot be regenerated or modified when players leave
@@ -358,21 +370,107 @@ A web application designed to organize and manage single-day pickleball round ro
 - **Active Round**: The current round where matches are being played and scores entered
 - **Additional Rounds**: Extra rounds added after completing the initially scheduled rounds
 
+### 3.5 Supabase-Managed Features
+
+The following features are handled entirely by Supabase and require NO custom implementation:
+
+#### Authentication & Sessions
+- **Magic Link Authentication**: Supabase Auth sends and validates login emails
+- **JWT Token Management**: Access tokens (1-hour default) and refresh tokens
+- **Session State**: All session data managed by Supabase, no custom tables needed
+- **Session Duration**: Configurable in Supabase dashboard (7-day default)
+- **Idle Timeout**: Available as Supabase Pro feature (2-hour configured)
+- **Token Refresh**: Automatic handling of token renewal
+- **Logout**: Supabase clears all session data
+
+#### Security & Rate Limiting  
+- **Login Attempt Rate Limiting**: 5 attempts per hour per email (Supabase Auth)
+- **API Rate Limiting**: 20 requests per minute per user (Supabase project settings)
+- **Email Verification**: Built into Supabase Auth flow
+- **Password Reset**: Not applicable (using passwordless auth)
+
+#### Database Features
+- **Connection Pooling**: Managed by Supabase
+- **SSL/TLS Encryption**: Automatic for all database connections
+- **Backups**: Daily backups on Pro plan
+- **Row Level Security (RLS)**: Native PostgreSQL feature via Supabase
+
+#### Real-time Features
+- **WebSocket Connections**: Managed by Supabase Realtime
+- **Subscription Management**: Automatic cleanup of disconnected clients
+- **Presence Tracking**: Available but not currently used
+
+**Important**: These features work out-of-the-box with proper Supabase configuration. No custom code, database tables, or middleware required.
+
 ## 4. Security Requirements
 ### 4.1 HTTPS & Encryption
-- All traffic served over HTTPS via GitHub Pages
-- End-to-end encryption between client and Supabase
-- Protection against MITM attacks
+- All traffic served over HTTPS via GitHub Pages (automatic)
+- TLS 1.2+ encryption for all Supabase API communications (mobile browser compatible)
+- Supabase API keys stored in environment variables during build process (Vite)
+- Authentication tokens stored in localStorage with 7-day expiration
+- Database encryption at rest provided by Supabase
 
 ### 4.2 Authentication & Authorization
-- Secure authentication via Supabase
-- Session management
-- User role definitions and permissions
+- **Authentication Method**: Magic link email authentication via Supabase Auth
+  - Organizers provide email address for passwordless login
+  - Supabase sends secure login links (1-hour expiration)
+  - No password management required
+- **User Roles**:
+  - Public/Player: View-only access to events, schedules, and standings
+  - Organizer: Full event creation and management capabilities
+- **Session Management** (Handled entirely by Supabase Auth):
+  - 7-day session duration with automatic refresh (Supabase configuration)
+  - 2-hour idle timeout - activity resets timer (Supabase Pro feature)
+  - Explicit logout clears all stored tokens
+  - No custom database tables needed - Supabase manages all session state
+- **Security Measures** (Enforced by Supabase):
+  - Rate limiting: 5 login attempts per email per hour (Supabase Auth feature)
+  - API rate limiting: 20 requests per minute per user (Supabase project setting)
+  - Email verification required for new organizer accounts
+  - No custom implementation required for these security features
 
 ### 4.3 Data Protection
-- Personal data handling compliance
-- Data retention policies
-- Privacy considerations
+- **Personal Data Collected**:
+  - Players: Names only (no email/phone required)
+  - Organizers: Email addresses (for authentication only)
+- **Data Retention**: Indefinite storage for historical records and statistics
+- **Access Control**:
+  - Public users can view all event data
+  - Only organizers can create/modify events and enter scores
+  - Organizer emails are never displayed publicly
+- **Privacy Policy**: Simple one-page policy required covering:
+  - Data collected (player names, organizer emails)
+  - Purpose (organizing pickleball events)
+  - No data selling or external sharing
+  - Contact information for privacy questions
+
+### 4.4 Application Security
+- **Input Validation**:
+  - Sanitize all user inputs (names, scores, event details)
+  - Validate score ranges and formats
+  - Prevent script injection in player names
+- **XSS Prevention**: React's automatic escaping for all rendered content
+- **SQL Injection Prevention**: Supabase prepared statements and parameterized queries
+- **CORS Configuration**: Restrict Supabase project to accept requests only from GitHub Pages domain
+- **Security Headers**:
+  - Content Security Policy (CSP) to prevent unauthorized scripts
+  - X-Frame-Options to prevent clickjacking
+  - X-Content-Type-Options to prevent MIME sniffing
+
+### 4.5 Operational Security
+- **Error Handling**:
+  - User-facing: Generic "Something went wrong. Please try again." messages
+  - System logging: Full error details saved to `error_logs` table
+  - Admin notifications: Email alerts for critical errors via Supabase Edge Functions
+- **API Error Responses**:
+  - Never expose database structure or internal system details
+  - Log detailed errors server-side for debugging
+  - Return only safe, generic error messages to clients
+- **Supabase Row Level Security (RLS)**:
+  - Mandatory for all tables to secure data with public API keys
+  - Public read access for events, matches, and standings
+  - Organizer-only write access for all data modifications
+  - Admin-only access to error_logs table
 
 ## 5. User Interface Requirements
 ### 5.1 Design Principles
