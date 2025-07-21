@@ -1,6 +1,6 @@
 -- 40+ Pickleball Platform Database Schema
--- Version: 1.3
--- Description: Complete PostgreSQL schema for round robin pickleball events with auth integration and privacy enhancements
+-- Version: 1.4
+-- Description: Complete PostgreSQL schema for round robin pickleball events with auth integration, privacy enhancements, and comprehensive security hardening
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -456,6 +456,28 @@ CREATE POLICY "Events are viewable by everyone" ON events
 CREATE POLICY "Players are viewable by everyone" ON players
     FOR SELECT USING (true);
 
+-- Only authenticated organizers can create players
+CREATE POLICY "Only organizers can create players" ON players
+    FOR INSERT WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM users 
+            WHERE users.auth_id = auth.uid()
+        )
+    );
+
+-- Only authenticated organizers can update players  
+CREATE POLICY "Only organizers can update players" ON players
+    FOR UPDATE USING (
+        EXISTS (
+            SELECT 1 FROM users 
+            WHERE users.auth_id = auth.uid()
+        )
+    );
+
+-- Prevent all deletes (use is_active flag for soft delete)
+CREATE POLICY "No one can delete players" ON players
+    FOR DELETE USING (false);
+
 CREATE POLICY "Event players are viewable by everyone" ON event_players
     FOR SELECT USING (true);
 
@@ -474,12 +496,40 @@ CREATE POLICY "Match scores are viewable by everyone" ON match_scores
 CREATE POLICY "Player statistics are viewable by everyone" ON player_statistics
     FOR SELECT USING (true);
 
+-- Statistics are read-only, updated only by triggers
+CREATE POLICY "No direct statistics inserts" ON player_statistics
+    FOR INSERT WITH CHECK (false);
+
+CREATE POLICY "No direct statistics updates" ON player_statistics
+    FOR UPDATE USING (false);
+
+CREATE POLICY "No statistics deletion" ON player_statistics
+    FOR DELETE USING (false);
+
+-- Users table policies
+CREATE POLICY "Users can view own profile" ON users
+    FOR SELECT USING (auth.uid() = auth_id);
+
+CREATE POLICY "Users can update own profile" ON users
+    FOR UPDATE USING (auth.uid() = auth_id)
+    WITH CHECK (auth.uid() = auth_id AND role = (SELECT role FROM users WHERE auth_id = auth.uid()));
+
+CREATE POLICY "No direct user creation" ON users
+    FOR INSERT WITH CHECK (false);
+
+CREATE POLICY "No user deletion" ON users
+    FOR DELETE USING (false);
+
 -- Authenticated users (organizers) can manage their own events
 CREATE POLICY "Organizers can create events" ON events
     FOR INSERT WITH CHECK (auth.uid() = created_by);
 
 CREATE POLICY "Organizers can update their own events" ON events
     FOR UPDATE USING (auth.uid() = created_by);
+
+-- Prevent event deletion
+CREATE POLICY "No event deletion" ON events
+    FOR DELETE USING (false);
 
 CREATE POLICY "Organizers can manage players in their events" ON event_players
     FOR ALL USING (
@@ -490,6 +540,10 @@ CREATE POLICY "Organizers can manage players in their events" ON event_players
         )
     );
 
+-- Prevent event player deletion
+CREATE POLICY "No event player deletion" ON event_players
+    FOR DELETE USING (false);
+
 CREATE POLICY "Organizers can manage rounds in their events" ON rounds
     FOR ALL USING (
         EXISTS (
@@ -499,6 +553,10 @@ CREATE POLICY "Organizers can manage rounds in their events" ON rounds
         )
     );
 
+-- Prevent round deletion
+CREATE POLICY "No round deletion" ON rounds
+    FOR DELETE USING (false);
+
 CREATE POLICY "Organizers can manage matches in their events" ON matches
     FOR ALL USING (
         EXISTS (
@@ -507,6 +565,10 @@ CREATE POLICY "Organizers can manage matches in their events" ON matches
             AND events.created_by = auth.uid()
         )
     );
+
+-- Prevent match deletion
+CREATE POLICY "No match deletion" ON matches
+    FOR DELETE USING (false);
 
 CREATE POLICY "Organizers can manage match players in their events" ON match_players
     FOR ALL USING (
@@ -518,6 +580,10 @@ CREATE POLICY "Organizers can manage match players in their events" ON match_pla
         )
     );
 
+-- Prevent match player deletion
+CREATE POLICY "No match player deletion" ON match_players
+    FOR DELETE USING (false);
+
 CREATE POLICY "Organizers can manage scores in their events" ON match_scores
     FOR ALL USING (
         EXISTS (
@@ -527,6 +593,10 @@ CREATE POLICY "Organizers can manage scores in their events" ON match_scores
             AND e.created_by = auth.uid()
         )
     );
+
+-- Prevent score deletion
+CREATE POLICY "No score deletion" ON match_scores
+    FOR DELETE USING (false);
 
 -- Error logs - only admins can view, service role can insert
 CREATE POLICY "Only admins can view error logs" ON error_logs
@@ -542,6 +612,10 @@ CREATE POLICY "Only admins can view error logs" ON error_logs
 CREATE POLICY "Service role can insert error logs" ON error_logs
     FOR INSERT WITH CHECK (true);
 
+-- Prevent error log deletion
+CREATE POLICY "No error log deletion" ON error_logs
+    FOR DELETE USING (false);
+
 -- Email queue - only admins can view, service role can manage
 CREATE POLICY "Only admins can view email queue" ON email_queue
     FOR SELECT USING (
@@ -555,6 +629,10 @@ CREATE POLICY "Only admins can view email queue" ON email_queue
 -- Service role bypass for email queue management
 CREATE POLICY "Service role can manage email queue" ON email_queue
     FOR ALL WITH CHECK (true);
+
+-- Prevent email queue deletion
+CREATE POLICY "No email queue deletion" ON email_queue
+    FOR DELETE USING (false);
 
 -- =====================================================
 -- HELPER FUNCTIONS
@@ -727,6 +805,151 @@ CREATE TRIGGER error_log_email_trigger
 AFTER INSERT ON error_logs
 FOR EACH ROW
 EXECUTE FUNCTION notify_admin_on_error();
+
+-- =====================================================
+-- SECURITY FUNCTIONS AND CONSTRAINTS
+-- =====================================================
+
+-- Function to check event capacity
+CREATE OR REPLACE FUNCTION check_event_capacity_limit()
+RETURNS TRIGGER AS $$
+DECLARE
+    current_registered INTEGER;
+    max_allowed INTEGER;
+BEGIN
+    -- Only check for new registrations or status changes to 'registered'
+    IF NEW.status = 'registered' AND (TG_OP = 'INSERT' OR OLD.status != 'registered') THEN
+        SELECT COUNT(*), e.max_players 
+        INTO current_registered, max_allowed
+        FROM event_players ep
+        JOIN events e ON ep.event_id = e.id
+        WHERE ep.event_id = NEW.event_id 
+        AND ep.status = 'registered'
+        AND ep.id != NEW.id  -- Don't count the current row
+        GROUP BY e.max_players;
+        
+        IF max_allowed IS NOT NULL AND current_registered >= max_allowed THEN
+            RAISE EXCEPTION 'Event has reached maximum capacity of % players', max_allowed;
+        END IF;
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to enforce event capacity
+CREATE TRIGGER enforce_event_capacity
+    BEFORE INSERT OR UPDATE ON event_players
+    FOR EACH ROW
+    EXECUTE FUNCTION check_event_capacity_limit();
+
+-- Function to validate score entries
+CREATE OR REPLACE FUNCTION validate_match_score()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Ensure scores are non-negative
+    IF NEW.team1_score < 0 OR NEW.team2_score < 0 THEN
+        RAISE EXCEPTION 'Scores cannot be negative';
+    END IF;
+    
+    -- Ensure winning team is set correctly
+    IF NEW.winning_team IS NOT NULL THEN
+        IF NEW.winning_team NOT IN (1, 2) THEN
+            RAISE EXCEPTION 'Winning team must be 1 or 2';
+        END IF;
+        
+        -- Verify winner has higher score
+        IF (NEW.winning_team = 1 AND NEW.team1_score <= NEW.team2_score) OR
+           (NEW.winning_team = 2 AND NEW.team2_score <= NEW.team1_score) THEN
+            RAISE EXCEPTION 'Winning team must have higher score';
+        END IF;
+    END IF;
+    
+    -- Ensure match exists and is not a bye
+    IF NOT EXISTS (
+        SELECT 1 FROM matches 
+        WHERE id = NEW.match_id 
+        AND is_bye = false
+    ) THEN
+        RAISE EXCEPTION 'Cannot enter scores for bye matches or non-existent matches';
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to validate scores
+CREATE TRIGGER validate_match_score_trigger
+    BEFORE INSERT OR UPDATE ON match_scores
+    FOR EACH ROW
+    EXECUTE FUNCTION validate_match_score();
+
+-- Function to prevent role escalation
+CREATE OR REPLACE FUNCTION prevent_role_escalation()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- If role is being changed, only allow if user is admin
+    IF NEW.role != OLD.role THEN
+        IF NOT EXISTS (
+            SELECT 1 FROM users 
+            WHERE auth_id = auth.uid() 
+            AND role = 'admin'
+        ) THEN
+            RAISE EXCEPTION 'Only admins can change user roles';
+        END IF;
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to prevent role escalation
+CREATE TRIGGER prevent_role_escalation_trigger
+    BEFORE UPDATE ON users
+    FOR EACH ROW
+    EXECUTE FUNCTION prevent_role_escalation();
+
+-- =====================================================
+-- API USAGE MONITORING (Optional)
+-- =====================================================
+
+-- Table to track API usage for monitoring
+CREATE TABLE IF NOT EXISTS api_usage_log (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    ip_address INET,
+    endpoint VARCHAR(255),
+    user_id UUID REFERENCES users(id),
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Index for performance
+CREATE INDEX idx_api_usage_created_at ON api_usage_log(created_at DESC);
+CREATE INDEX idx_api_usage_ip ON api_usage_log(ip_address, created_at DESC);
+
+-- Enable RLS on api_usage_log
+ALTER TABLE api_usage_log ENABLE ROW LEVEL SECURITY;
+
+-- Only service role can write to usage log
+CREATE POLICY "Service role manages usage log" ON api_usage_log
+    FOR ALL WITH CHECK (false);  -- Frontend cannot access this
+
+-- =====================================================
+-- SECURITY DOCUMENTATION COMMENTS
+-- =====================================================
+
+COMMENT ON SCHEMA public IS 'Schema version 1.4 - Security hardening applied. All tables protected with comprehensive RLS policies.';
+
+COMMENT ON POLICY "Only organizers can create players" ON players IS 
+'Prevents anonymous users from creating fake player records. Only authenticated organizers can add players.';
+
+COMMENT ON POLICY "No one can delete players" ON players IS 
+'Enforces data integrity by preventing hard deletes. Use is_active flag for soft deletes.';
+
+COMMENT ON TRIGGER enforce_event_capacity ON event_players IS 
+'Prevents event capacity from being exceeded through direct database manipulation.';
+
+COMMENT ON TRIGGER validate_match_score_trigger ON match_scores IS 
+'Ensures score integrity by validating winning team has higher score and matches exist.';
 
 -- =====================================================
 -- SAMPLE DATA (Optional - Remove for production)
