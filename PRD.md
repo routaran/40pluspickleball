@@ -1013,16 +1013,16 @@ See migration `004_security_hardening.sql` for complete security implementation.
 
 ## 8. Open Questions & Decisions
 ### 8.1 Architecture Decisions
-- [ ] Frontend framework selection
-- [ ] State management approach
-- [ ] Build and deployment pipeline
+- [x] **Frontend framework**: React 18+ with TypeScript (as specified in Section 3.1)
+- [x] **State management**: TanStack Query for server state + React Context for auth/global UI state
+- [x] **Build and deployment pipeline**: GitHub Actions → GitHub Pages
 
 ### 8.2 Feature Decisions
-[Features under consideration]
+- [x] **Skill-based pairing**: Track skill levels for future use, but MVP uses random pairing only
+- [x] **Print layouts**: Full schedule only (no per-court printouts)
+- [x] **Mobile gestures**: Not in MVP (standard touch interactions only)
+- [x] **Data export**: Not in MVP (print functionality is sufficient)
+- [x] **Player photos**: Not needed (names are sufficient identification)
+- [x] **Weather integration**: Not needed (out of scope)
+- [x] **Historical statistics**: Simple table view of past events only
 
-## 9. Appendices
-### 9.1 Glossary
-[Technical terms and pickleball-specific terminology]
-
-### 9.2 References
-[Related documents and resources]
