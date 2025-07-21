@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Print Layout Templates - 40+ Pickleball</title>
+    <style>
+        /* Screen styles for preview */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        
+        .template-section {
+            background: white;
+            margin-bottom: 40px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .template-title {
+            color: #333;
+            border-bottom: 2px solid #2196F3;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        /* PRINT STYLES - The actual templates */
+        @media print {
+            body {
+                margin: 0;
+                background: white;
+                font-family: Arial, sans-serif;
+                line-height: 1.4;
+            }
+            
+            .template-section {
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
+                background: white;
+            }
+            
+            .template-title {
+                display: none;
+            }
+            
+            .no-print {
+                display: none !important;
+            }
+            
+            .page-break {
+                page-break-after: always;
+            }
+            
+            .keep-together {
+                page-break-inside: avoid;
+            }
+            
+            /* Force black text on white background */
+            * {
+                color: black !important;
+                background: white !important;
+            }
+        }
+        
+        /* ============================================
+           SCHEDULE PRINT LAYOUT
+           ============================================ */
+        
+        .schedule-print {
+            width: 100%;
+            max-width: 8.5in;
+        }
+        
+        .schedule-header {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .schedule-meta {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        
+        .round-section {
+            margin-bottom: 30px;
+        }
+        
+        .round-title {
+            font-size: 16px;
+            font-weight: bold;
+            background: #f0f0f0;
+            padding: 8px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .matches-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        
+        .court-match {
+            border: 2px solid #333;
+            padding: 12px;
+            position: relative;
+        }
+        
+        .court-number {
+            position: absolute;
+            top: -8px;
+            left: 8px;
+            background: white;
+            padding: 0 8px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .match-teams {
+            margin-top: 8px;
+        }
+        
+        .team {
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        
+        .team-label {
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+        
+        .players {
+            margin-left: 10px;
+        }
+        
+        .vs-divider {
+            text-align: center;
+            font-weight: bold;
+            margin: 8px 0;
+        }
+        
+        .bye-indicator {
+            text-align: center;
+            font-style: italic;
+            color: #666;
+            padding: 20px;
+            background: #f8f8f8;
+        }
+        
+        /* Landscape orientation for many courts */
+        @media print and (orientation: landscape) {
+            .matches-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            }
+            
+            .court-match {
+                padding: 10px;
+            }
+        }
+        
+        /* ============================================
+           STANDINGS PRINT LAYOUT
+           ============================================ */
+        
+        .standings-print {
+            width: 100%;
+            max-width: 8.5in;
+        }
+        
+        .standings-header {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .standings-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        .standings-table th,
+        .standings-table td {
+            border: 1px solid #333;
+            padding: 8px 6px;
+            text-align: center;
+            font-size: 12px;
+        }
+        
+        .standings-table th {
+            background: #f0f0f0;
+            font-weight: bold;
+        }
+        
+        .standings-table .rank-col {
+            width: 8%;
+            font-weight: bold;
+        }
+        
+        .standings-table .name-col {
+            width: 25%;
+            text-align: left;
+        }
+        
+        .standings-table .record-col {
+            width: 12%;
+        }
+        
+        .standings-table .points-col {
+            width: 10%;
+        }
+        
+        .standings-table .diff-col {
+            width: 10%;
+        }
+        
+        /* Highlight top 3 */
+        .standings-table tr.rank-1 {
+            background: #fff9c4 !important;
+        }
+        
+        .standings-table tr.rank-2 {
+            background: #f5f5f5 !important;
+        }
+        
+        .standings-table tr.rank-3 {
+            background: #f5f5f5 !important;
+        }
+        
+        .tiebreaker-note {
+            font-size: 10px;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        
+        /* ============================================
+           SCORE ENTRY SHEETS
+           ============================================ */
+        
+        .scorecards-print {
+            width: 100%;
+        }
+        
+        .scorecard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 20px;
+            height: 10in;
+        }
+        
+        .scorecard {
+            border: 2px solid #333;
+            padding: 15px;
+            position: relative;
+        }
+        
+        .scorecard-header {
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 8px;
+        }
+        
+        .scorecard-team {
+            margin-bottom: 12px;
+        }
+        
+        .scorecard-team-label {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .scorecard-players {
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        
+        .scorecard-score-boxes {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .scorecard-score-box {
+            width: 30px;
+            height: 25px;
+            border: 1px solid #333;
+            display: inline-block;
+        }
+        
+        .scorecard-duration {
+            position: absolute;
+            bottom: 10px;
+            left: 15px;
+            font-size: 11px;
+        }
+        
+        .scorecard-duration-box {
+            width: 60px;
+            height: 20px;
+            border: 1px solid #333;
+            display: inline-block;
+            margin-left: 5px;
+        }
+        
+        /* ============================================
+           UTILITY CLASSES
+           ============================================ */
+        
+        .text-center { text-align: center; }
+        .text-left { text-align: left; }
+        .text-right { text-align: right; }
+        .font-bold { font-weight: bold; }
+        .font-italic { font-style: italic; }
+        .margin-bottom { margin-bottom: 20px; }
+        
+        @media print {
+            .text-center { text-align: center; }
+            .text-left { text-align: left; }
+            .text-right { text-align: right; }
+            .font-bold { font-weight: bold; }
+            .font-italic { font-style: italic; }
+            .margin-bottom { margin-bottom: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- ============================================
+         SCHEDULE TEMPLATE
+         ============================================ -->
+    <div class="template-section">
+        <h2 class="template-title">Schedule Print Template</h2>
+        
+        <div class="schedule-print">
+            <div class="schedule-header">
+                Saturday Morning Doubles Round Robin
+            </div>
+            
+            <div class="schedule-meta">
+                March 16, 2024 • 9:00 AM • Courts 1-4
+            </div>
+            
+            <div class="round-section keep-together">
+                <div class="round-title">Round 1</div>
+                
+                <div class="matches-grid">
+                    <div class="court-match">
+                        <div class="court-number">Court 1</div>
+                        <div class="match-teams">
+                            <div class="team">
+                                <div class="team-label">Team 1:</div>
+                                <div class="players">Alice Anderson & Bob Brown</div>
+                            </div>
+                            <div class="vs-divider">VS</div>
+                            <div class="team">
+                                <div class="team-label">Team 2:</div>
+                                <div class="players">Carol Chen & David Davis</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="court-match">
+                        <div class="court-number">Court 2</div>
+                        <div class="match-teams">
+                            <div class="team">
+                                <div class="team-label">Team 1:</div>
+                                <div class="players">Eve Evans & Frank Foster</div>
+                            </div>
+                            <div class="vs-divider">VS</div>
+                            <div class="team">
+                                <div class="team-label">Team 2:</div>
+                                <div class="players">Grace Green & Henry Hill</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="court-match">
+                        <div class="court-number">Court 3</div>
+                        <div class="match-teams">
+                            <div class="team">
+                                <div class="team-label">Team 1:</div>
+                                <div class="players">Ivy Johnson & Jack Kelly</div>
+                            </div>
+                            <div class="vs-divider">VS</div>
+                            <div class="team">
+                                <div class="team-label">Team 2:</div>
+                                <div class="players">Linda Lee & Mark Miller</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="court-match bye-indicator">
+                        <div class="court-number">Bye</div>
+                        <div class="players">Nancy Nelson & Oscar Owen</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="page-break"></div>
+    
+    <!-- ============================================
+         STANDINGS TEMPLATE
+         ============================================ -->
+    <div class="template-section">
+        <h2 class="template-title">Standings Print Template</h2>
+        
+        <div class="standings-print">
+            <div class="standings-header">
+                Current Standings - Saturday Morning Doubles
+            </div>
+            
+            <div class="schedule-meta">
+                After Round 5 of 7 • March 16, 2024 • 11:30 AM
+            </div>
+            
+            <table class="standings-table">
+                <thead>
+                    <tr>
+                        <th class="rank-col">Rank</th>
+                        <th class="name-col">Player Name</th>
+                        <th class="record-col">W-L</th>
+                        <th class="points-col">PF</th>
+                        <th class="points-col">PA</th>
+                        <th class="diff-col">Diff</th>
+                        <th class="points-col">Win %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="rank-1">
+                        <td class="rank-col">1</td>
+                        <td class="name-col">Alice Anderson</td>
+                        <td class="record-col">5-0</td>
+                        <td class="points-col">55</td>
+                        <td class="points-col">32</td>
+                        <td class="diff-col">+23</td>
+                        <td class="points-col">100%</td>
+                    </tr>
+                    <tr class="rank-2">
+                        <td class="rank-col">2</td>
+                        <td class="name-col">Bob Brown</td>
+                        <td class="record-col">4-1</td>
+                        <td class="points-col">48</td>
+                        <td class="points-col">38</td>
+                        <td class="diff-col">+10</td>
+                        <td class="points-col">80%</td>
+                    </tr>
+                    <tr class="rank-3">
+                        <td class="rank-col">3</td>
+                        <td class="name-col">Carol Chen</td>
+                        <td class="record-col">4-1</td>
+                        <td class="points-col">46</td>
+                        <td class="points-col">40</td>
+                        <td class="diff-col">+6</td>
+                        <td class="points-col">80%</td>
+                    </tr>
+                    <tr>
+                        <td class="rank-col">4</td>
+                        <td class="name-col">David Davis</td>
+                        <td class="record-col">3-2</td>
+                        <td class="points-col">42</td>
+                        <td class="points-col">45</td>
+                        <td class="diff-col">-3</td>
+                        <td class="points-col">60%</td>
+                    </tr>
+                    <tr>
+                        <td class="rank-col">5</td>
+                        <td class="name-col">Eve Evans</td>
+                        <td class="record-col">2-3</td>
+                        <td class="points-col">38</td>
+                        <td class="points-col">48</td>
+                        <td class="diff-col">-10</td>
+                        <td class="points-col">40%</td>
+                    </tr>
+                    <tr>
+                        <td class="rank-col">6</td>
+                        <td class="name-col">Frank Foster</td>
+                        <td class="record-col">1-4</td>
+                        <td class="points-col">35</td>
+                        <td class="points-col">50</td>
+                        <td class="diff-col">-15</td>
+                        <td class="points-col">20%</td>
+                    </tr>
+                    <tr>
+                        <td class="rank-col">7</td>
+                        <td class="name-col">Grace Green</td>
+                        <td class="record-col">0-5</td>
+                        <td class="points-col">28</td>
+                        <td class="points-col">55</td>
+                        <td class="diff-col">-27</td>
+                        <td class="points-col">0%</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="tiebreaker-note">
+                Tiebreakers: 1) Head-to-Head 2) Point Differential 3) Total Points For
+            </div>
+        </div>
+    </div>
+    
+    <div class="page-break"></div>
+    
+    <!-- ============================================
+         SCORE ENTRY CARDS TEMPLATE
+         ============================================ -->
+    <div class="template-section">
+        <h2 class="template-title">Score Entry Cards Template</h2>
+        
+        <div class="scorecards-print">
+            <div class="scorecard-grid">
+                <div class="scorecard">
+                    <div class="scorecard-header">
+                        Court 1 • Round 3 • Match 9
+                    </div>
+                    
+                    <div class="scorecard-team">
+                        <div class="scorecard-team-label">Team 1:</div>
+                        <div class="scorecard-players">Alice Anderson & Bob Brown</div>
+                        <div class="scorecard-score-boxes">
+                            Score: <span class="scorecard-score-box"></span> 
+                            <span class="scorecard-score-box"></span>
+                            <span class="scorecard-score-box"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="scorecard-team">
+                        <div class="scorecard-team-label">Team 2:</div>
+                        <div class="scorecard-players">Carol Chen & David Davis</div>
+                        <div class="scorecard-score-boxes">
+                            Score: <span class="scorecard-score-box"></span>
+                            <span class="scorecard-score-box"></span>
+                            <span class="scorecard-score-box"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="scorecard-duration">
+                        Duration: <span class="scorecard-duration-box"></span> min
+                    </div>
+                </div>
+                
+                <div class="scorecard">
+                    <div class="scorecard-header">
+                        Court 2 • Round 3 • Match 10
+                    </div>
+                    
+                    <div class="scorecard-team">
+                        <div class="scorecard-team-label">Team 1:</div>
+                        <div class="scorecard-players">Eve Evans & Frank Foster</div>
+                        <div class="scorecard-score-boxes">
+                            Score: <span class="scorecard-score-box"></span>
+                            <span class="scorecard-score-box"></span>
+                            <span class="scorecard-score-box"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="scorecard-team">
+                        <div class="scorecard-team-label">Team 2:</div>
+                        <div class="scorecard-players">Grace Green & Henry Hill</div>
+                        <div class="scorecard-score-boxes">
+                            Score: <span class="scorecard-score-box"></span>
+                            <span class="scorecard-score-box"></span>
+                            <span class="scorecard-score-box"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="scorecard-duration">
+                        Duration: <span class="scorecard-duration-box"></span> min
+                    </div>
+                </div>
+                
+                <div class="scorecard">
+                    <div class="scorecard-header">
+                        Court 3 • Round 3 • Match 11
+                    </div>
+                    
+                    <div class="scorecard-team">
+                        <div class="scorecard-team-label">Team 1:</div>
+                        <div class="scorecard-players">Ivy Johnson & Jack Kelly</div>
+                        <div class="scorecard-score-boxes">
+                            Score: <span class="scorecard-score-box"></span>
+                            <span class="scorecard-score-box"></span>
+                            <span class="scorecard-score-box"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="scorecard-team">
+                        <div class="scorecard-team-label">Team 2:</div>
+                        <div class="scorecard-players">Linda Lee & Mark Miller</div>
+                        <div class="scorecard-score-boxes">
+                            Score: <span class="scorecard-score-box"></span>
+                            <span class="scorecard-score-box"></span>
+                            <span class="scorecard-score-box"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="scorecard-duration">
+                        Duration: <span class="scorecard-duration-box"></span> min
+                    </div>
+                </div>
+                
+                <div class="scorecard">
+                    <div class="scorecard-header">
+                        Bye Round
+                    </div>
+                    
+                    <div class="scorecard-team">
+                        <div class="scorecard-team-label">Players on Bye:</div>
+                        <div class="scorecard-players">Nancy Nelson & Oscar Owen</div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 30px; font-style: italic;">
+                        No match this round
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
