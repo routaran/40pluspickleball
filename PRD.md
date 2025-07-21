@@ -1010,35 +1010,19 @@ See migration `004_security_hardening.sql` for complete security implementation.
 - No A/B testing or feature flags at server level
 - Version rollbacks require new deployments
 
-### 7.2 Budget Constraints
-[Cost considerations for services]
 
-## 8. Success Metrics
-### 8.1 Key Performance Indicators
-[How success will be measured]
-
-### 8.2 User Engagement Metrics
-[Specific metrics to track]
-
-## 9. Timeline & Milestones
-### 9.1 Development Phases
-[MVP and future phases]
-
-### 9.2 Key Deliverables
-[Major milestones and deadlines]
-
-## 10. Open Questions & Decisions
-### 10.1 Architecture Decisions
+## 8. Open Questions & Decisions
+### 8.1 Architecture Decisions
 - [ ] Frontend framework selection
 - [ ] State management approach
 - [ ] Build and deployment pipeline
 
-### 10.2 Feature Decisions
+### 8.2 Feature Decisions
 [Features under consideration]
 
-## 11. Appendices
-### 11.1 Glossary
+## 9. Appendices
+### 9.1 Glossary
 [Technical terms and pickleball-specific terminology]
 
-### 11.2 References
+### 9.2 References
 [Related documents and resources]
