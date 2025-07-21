@@ -474,13 +474,333 @@ The following features are handled entirely by Supabase and require NO custom im
 
 ## 5. User Interface Requirements
 ### 5.1 Design Principles
-[UI/UX guidelines and accessibility standards]
+
+The user interface should prioritize efficiency and clarity for both player groups: organizers managing events and players checking schedules/standings. All design decisions should support the core workflows of event setup, match discovery, score entry, and standings tracking.
+
+#### 1. Simplicity & Clarity
+- Use large, readable text appropriate for the age demographic
+- Provide clear button labels instead of icon-only navigation
+- Maintain minimal navigation depth (maximum 3 levels)
+- Use straightforward terminology familiar to pickleball players
+
+#### 2. Mobile-Optimized for Courtside Use
+- Implement touch-friendly targets (minimum 44px touch areas)
+- Design for one-handed operation during score entry
+- Provide quick access to current round matches
+- Ensure responsive design works seamlessly on all screen sizes
+
+#### 3. Efficiency for Organizers
+- Support batch operations for entering multiple scores at once
+- Provide smart defaults with common scores pre-filled (11-9, 11-7)
+- Display clear progress indicators for event completion
+- Streamline the player check-in process with bulk actions
+
+#### 4. Information Density Balance
+- Show essential information prominently (court assignments, match pairings)
+- Use progressive disclosure for detailed information
+- Create print-optimized layouts for physical posting
+- Avoid information overload on mobile screens
+
+#### 5. Consistency
+- Maintain standard patterns throughout (forms, buttons, navigation)
+- Ensure predictable behaviors across all interactions
+- Use familiar terminology from the pickleball community
+- Apply unified visual language and styling
+
+#### 6. Visual Status Communication
+- Provide clear indicators for match states (pending, in-progress, completed, locked)
+- Visually differentiate between original and regenerated matches
+- Show progress bars or completion percentages for rounds
+- Highlight missing scores that block round advancement
+- Use badge notifications for "action needed" items
+
+#### 7. Scannable Layouts for Quick Discovery
+- Display player names first in match lists for easy self-finding
+- Offer court-centric view option for score entry workflow
+- Provide alphabetical player lists with jump-to navigation
+- Display court numbers prominently in large text
+- Clearly indicate current round at top of page
+
+#### 8. Print-Optimized Designs
+- Include dedicated print stylesheets for schedules and standings
+- Support court-by-court breakdown for posting at individual courts
+- Design compact layouts that fit standard paper sizes
+- Remove navigation and interactive elements from print views
+- Ensure high contrast black & white printing compatibility
+
+#### 9. State Preservation & Smart Defaults
+- Remember last event viewed by each user
+- Auto-focus on current/active round when opening event
+- Pre-fill common scores with quick selection options
+- Provide "duplicate last score" functionality
+- Maintain scroll position during score entry
+
+#### 10. Clear Action Affordances
+- Keep primary actions always visible (Enter Score, Next Round)
+- Require confirmation for destructive actions (Remove Player)
+- Show disabled states with explanatory tooltips
+- Display multi-step processes with clear progression indicators
+- Provide immediate visual feedback for all user actions
+
+#### 11. Time-Aware Interface
+- Auto-highlight today's events on landing page
+- Sort upcoming events by date proximity
+- Visually separate past, present, and future events
+- Display "Event in progress" indicators
+- Show time since last update for live events
+
+#### 12. System Feedback & Loading States
+- Provide immediate visual feedback for all user actions
+- Display loading indicators for any operation exceeding 0.5 seconds
+- Show progress bars for multi-step operations (match generation, bulk actions)
+- Disable interactive elements during processing to prevent duplicate submissions
+- Display clear success confirmations or error messages upon completion
+- Use skeleton screens for initial page loads
+- Implement optimistic updates where appropriate for better perceived performance
+
+#### Error Handling Patterns
+- Display user-friendly error messages without technical details
+- Provide actionable next steps when errors occur
+- Log detailed errors for admin review (via Supabase)
+- Implement retry mechanisms for transient failures
+- Show offline indicators when network connectivity is lost
+- Use toast notifications for non-blocking errors
+- Display inline validation errors immediately
+- Maintain form state during error recovery
 
 ### 5.2 Key Pages/Screens
-[List of main pages and their purposes]
+
+The application consists of 13 primary pages organized into three categories: public access, organizer-only access, and special purpose pages. Each page is designed to support specific workflows identified in the user capabilities and stories.
+
+#### Public Pages (Unauthenticated Access)
+
+##### 1. Home/Events List Page
+**Purpose**: Central hub for event discovery and navigation
+- List all events (past, present, future) with time-aware sorting
+- Today's events highlighted at top
+- "Event in progress" indicators
+- Quick filters (upcoming, past, today)
+- Links to event details
+
+##### 2. Event Details Page
+**Purpose**: Complete view of a specific event
+- Event info (date, time, courts, format)
+- Current round indicator
+- All rounds with expandable match lists
+- Quick jump navigation to specific rounds
+- Player roster with presence status
+- Links to dedicated views (schedule, standings)
+
+##### 3. Current Round Schedule Page
+**Purpose**: Quick player lookup for active matches
+- Large, scannable list of current round matches
+- Court assignments prominently displayed
+- Player names first for easy self-finding
+- Partner identification
+- Match status indicators
+- Clear "BYE" marking for players sitting out
+- Visual indicator for players with consecutive bye prevention active
+- Print-optimized layout option
+
+##### 4. Standings Page
+**Purpose**: Real-time tournament rankings
+- Win/loss records
+- Point differentials
+- Tiebreaker information
+- Visual ranking indicators
+- Updates immediately after score entry
+- Auto-refresh indicator showing when data was last updated
+- Loading state during live updates
+
+##### 5. Player Statistics Page
+**Purpose**: Individual performance history
+- Cross-event statistics
+- Historical match results
+- Win percentage trends
+- Partner performance data
+
+#### Authenticated Pages (Organizer Access)
+
+##### 6. Organizer Dashboard
+**Purpose**: Central management hub for organizers
+- Quick actions (create event, manage active events)
+- Today's event shortcuts
+
+##### 7. Create Event Page
+**Purpose**: New event setup
+- Event details form (name, date, time)
+- Court configuration
+- Scoring format settings
+- Player roster builder
+- Mid-event join toggle
+- Print settings configuration
+
+##### 8. Event Management Page
+**Purpose**: Active event control center
+- Player check-in interface with present/no-show/unchecked status toggles
+- Generate pairings button with loading indicator during generation
+- Round progression controls
+- Player removal/addition tools
+- Event status management
+- Links to specialized views
+- Progress feedback for bulk player operations
+- Disabled state for action buttons during processing
+
+##### 9. Score Entry Page
+**Purpose**: Efficient match result recording
+- Court-centric or match-list view toggle
+- Large touch targets for mobile
+- Common score quick-select buttons
+- Batch entry support
+- Progress indicators
+- Missing scores highlighted
+- Submission confirmation with loading state
+- Prevent double-submission with button disabling
+- Success feedback after score saved
+
+##### 10. Schedule Management Page
+**Purpose**: View and modify generated schedules
+- Full tournament bracket view
+- Regeneration controls for departed players
+- Visual differentiation of regenerated matches
+- Visual indicators for immutable (completed) matches
+- Round-by-round navigation
+- Add additional rounds option
+- Progress indicator during match regeneration
+- Loading state while calculating new pairings
+
+##### 11. Print/Export Page
+**Purpose**: Generate physical documents
+- Schedule print preview (by court or consolidated)
+- Standings print preview
+- Layout customization options
+- Direct print or PDF download
+- Document generation progress indicator
+- Loading state during PDF creation
+
+#### Special Purpose Pages
+
+##### 12. Login Page
+**Purpose**: Organizer authentication
+- Email input for magic link
+- Clear instructions
+- Link to return to public view
+
+##### 13. Round Transition Page
+**Purpose**: Between-round status and actions
+- Completion status of current round
+- List of matches needing scores
+- "Advance to Next Round" button (when ready)
+- Round statistics summary
+- Processing indicator during round advancement
+- Clear feedback when round successfully advanced
 
 ### 5.3 Responsive Design
-[Mobile, tablet, and desktop considerations]
+
+The application supports two primary device workflows with a mobile-first responsive approach that ensures optimal experiences for both organizers and players.
+
+#### Core Device Workflows
+
+**Desktop (Primary for Setup)**:
+- Event creation and configuration
+- Roster management and player check-in
+- Schedule generation and modification
+- Print/export operations
+
+**Mobile (Primary for Courtside)**:
+- Courtside score entry by organizers
+- Player match lookups ("What court am I on?")
+- Quick standings checks between matches
+
+**Tablet (Optional)**:
+- Alternative for any desktop or mobile workflow
+- No tablet-specific features required
+
+#### Critical Responsive Requirements
+
+##### Mobile-First Pages (Must be flawless on phones)
+
+**Current Round Schedule Page**:
+- Large court numbers for quick identification
+- Player names prominent and scannable
+- Minimal scrolling to find matches
+- Partner names clearly visible
+- Touch-friendly spacing throughout
+
+**Score Entry Page**:
+- Oversized score buttons for easy tapping
+- One-thumb reachable controls
+- Clear match identification at top
+- No precision tapping required
+- Confirmation before submission
+
+**Standings Page**:
+- Essential columns only on mobile (Rank, Name, W-L, Points)
+- Horizontal scroll for additional statistics
+- Current standings highlighted
+- Large, readable text
+
+##### Desktop-Optimized Pages
+
+**Create Event & Event Management**:
+- Multi-column layouts for complex forms
+- All options visible without scrolling
+- Drag-and-drop for roster building (optional)
+- Side-by-side comparisons
+
+**Print/Export Page**:
+- Full document preview at actual size
+- Print CSS independent of screen size
+- Multiple layout options visible
+
+#### Universal Responsive Patterns
+
+**Navigation**:
+- Collapsible hamburger menu on mobile
+- Full horizontal navigation on desktop
+- Consistent placement across all pages
+
+**Tables**:
+- Priority columns visible on mobile
+- Full data tables on desktop
+- Horizontal scroll indicators when needed
+
+**Typography**:
+- Base font size 16px minimum
+- Larger sizes for headers and court numbers
+- Line height optimized for readability
+
+**Spacing**:
+- Increased padding on mobile (minimum 44px touch targets)
+- Compact spacing on desktop for information density
+- Consistent margins across breakpoints
+
+#### What NOT to Include
+
+- Complex breakpoint systems (mobile/desktop split is sufficient)
+- Orientation-specific layouts
+- Device-specific features
+- Offline capabilities
+- App-like behaviors (pull-to-refresh, gestures)
+
+#### Technical Implementation Notes
+
+**CSS Architecture**:
+- CSS Grid/Flexbox for fluid layouts
+- rem units for scalable typography
+- CSS custom properties for consistent spacing
+- Mobile-first media queries (@media min-width)
+
+**Breakpoints**:
+- Mobile: 320px - 767px
+- Desktop: 768px+
+- No intermediate breakpoints needed
+
+**Print Styles**:
+- Separate @media print stylesheet
+- Hidden navigation and interactive elements
+- Optimized for 8.5" x 11" paper
+- High contrast black and white compatible
 
 ## 6. API & Integration Requirements
 ### 6.1 Supabase Integration
