@@ -108,7 +108,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
-        <Router>
+        <Router basename="/40pluspickleball">
           <AuthProvider>
             <QueryErrorBoundary>
               <div className="min-h-screen bg-gray-50">
