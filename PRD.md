@@ -804,58 +804,175 @@ The application supports two primary device workflows with a mobile-first respon
 
 ## 6. API & Integration Requirements
 ### 6.1 Supabase Integration
-- Database operations
-- Real-time subscriptions (if needed)
-- Storage requirements
+
+The application relies entirely on Supabase for backend functionality, leveraging its comprehensive feature set to eliminate the need for custom backend development.
+
+#### Database Operations
+
+**CRUD Operations Required:**
+- **Events**: Create, read, update event details and status
+- **Players**: Create and read player profiles (update rarely needed)
+- **Event Players**: Create registrations, update status (present/no-show/departed)
+- **Rounds**: Create rounds, update status, read for display
+- **Matches**: Batch create for round generation, update status, read for schedules
+- **Match Players**: Batch create for team assignments, read for display
+- **Match Scores**: Create scores, read for standings calculation
+- **Player Statistics**: Auto-updated via triggers, read for displays
+
+**Batch Operations:**
+- Match generation: Insert multiple matches and match_player records in single transaction
+- Round creation: Create all matches for a round atomically
+- Player check-in: Update multiple event_player records simultaneously
+
+**Complex Queries:**
+- Standings calculation with multi-tier tiebreakers
+- Player match history across events
+- Current round identification with active matches
+- Head-to-head comparisons for tiebreaking
+- Bye round distribution analysis
+
+**Transaction Requirements:**
+- Match regeneration: Delete future matches and create new ones atomically
+- Round advancement: Update round status and create new round in transaction
+- Score entry: Update match status and create score record together
+
+#### Real-time Subscriptions
+
+Real-time subscriptions enable live updates across all connected clients without page refresh, critical for tournament management.
+
+**What are Real-time Subscriptions:**
+- WebSocket connections that listen for database changes
+- Automatic UI updates when data changes on any client
+- Essential for multi-device coordination during events
+
+**Tables Requiring Real-time Subscriptions:**
+
+1. **match_scores** (Critical)
+   - Subscribe to INSERT events
+   - Updates standings immediately for all viewers
+   - Shows match completion in real-time
+
+2. **matches** (Critical)
+   - Subscribe to UPDATE events on `status` field
+   - Shows when matches start/complete
+   - Updates schedule displays instantly
+
+3. **rounds** (Important)
+   - Subscribe to UPDATE events on `status` field
+   - Notifies when rounds advance
+   - Activates next round for all viewers
+
+4. **event_players** (Important)
+   - Subscribe to UPDATE events on `status` field
+   - Shows check-in progress in real-time
+   - Updates player counts dynamically
+
+**Subscription Patterns:**
+```javascript
+// Example: Subscribe to scores for a specific event
+const subscription = supabase
+  .channel('match-scores')
+  .on('postgres_changes', {
+    event: 'INSERT',
+    schema: 'public',
+    table: 'match_scores',
+    filter: `match_id=in.(${matchIds})`
+  }, handleScoreUpdate)
+  .subscribe()
+```
+
+**Connection Management:**
+- Establish subscriptions on event detail/schedule pages
+- Clean up subscriptions on page navigation
+- Handle reconnection for network interruptions
+- Limit subscriptions to current event for performance
+
+#### Authentication Integration
+
+**Magic Link Authentication Flow:**
+1. User enters email on login page
+2. Supabase sends magic link email
+3. User clicks link to authenticate
+4. Session created with 7-day duration
+5. Frontend stores session in localStorage
+
+**Session Management:**
+- Check session validity on app load
+- Refresh tokens automatically before expiration
+- Clear session on explicit logout
+- Redirect to login when session expires
+
+**Role-based Access Control:**
+- Public routes: No authentication required
+- Organizer routes: Check for valid Supabase session
+- Admin routes: Verify user role from users table
+- Implement route guards in React Router
+
+#### Storage Requirements
+
+**Database Storage Only:**
+- No file uploads or blob storage needed
+- All data is structured and relational
+- Estimated storage for 16-player events:
+  - ~100KB per event (including all matches/scores)
+  - ~1MB per year of regular events
+  - Minimal storage costs
+
+**Data Retention:**
+- Indefinite retention for historical statistics
+- No archival process needed for small dataset
+- All data remains queryable for player stats
 
 ### 6.2 Third-party Services
-[Any additional integrations needed]
 
-## 7. Performance Requirements
-### 7.1 Load Time Targets
-[Page load speed requirements]
+**No Additional Services Required**
 
-### 7.2 Scalability
-[Expected user load and growth]
+The application's requirements are fully met by Supabase's integrated platform:
+- Authentication: Supabase Auth
+- Database: Supabase PostgreSQL
+- Real-time: Supabase Realtime
+- API: Supabase auto-generated APIs
 
-### 7.3 Availability
-[Uptime requirements]
+**Future Considerations:**
+- Email customization: Currently uses Supabase default templates
+- Advanced analytics: Could integrate with analytics service if needed
+- Backup solution: Supabase handles daily backups on Pro plan
 
-## 8. Constraints & Limitations
-### 8.1 Technical Constraints
+## 7. Constraints & Limitations
+### 7.1 Technical Constraints
 - Client-side only execution (GitHub Pages limitation)
 - Static hosting constraints
 - Browser compatibility requirements
 
-### 8.2 Budget Constraints
+### 7.2 Budget Constraints
 [Cost considerations for services]
 
-## 9. Success Metrics
-### 9.1 Key Performance Indicators
+## 8. Success Metrics
+### 8.1 Key Performance Indicators
 [How success will be measured]
 
-### 9.2 User Engagement Metrics
+### 8.2 User Engagement Metrics
 [Specific metrics to track]
 
-## 10. Timeline & Milestones
-### 10.1 Development Phases
+## 9. Timeline & Milestones
+### 9.1 Development Phases
 [MVP and future phases]
 
-### 10.2 Key Deliverables
+### 9.2 Key Deliverables
 [Major milestones and deadlines]
 
-## 11. Open Questions & Decisions
-### 11.1 Architecture Decisions
+## 10. Open Questions & Decisions
+### 10.1 Architecture Decisions
 - [ ] Frontend framework selection
 - [ ] State management approach
 - [ ] Build and deployment pipeline
 
-### 11.2 Feature Decisions
+### 10.2 Feature Decisions
 [Features under consideration]
 
-## 12. Appendices
-### 12.1 Glossary
+## 11. Appendices
+### 11.1 Glossary
 [Technical terms and pickleball-specific terminology]
 
-### 12.2 References
+### 11.2 References
 [Related documents and resources]
