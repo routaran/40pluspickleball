@@ -131,7 +131,7 @@ ranked_results AS (
         -- D = point differential + 10000 (to handle negatives)
         -- P = points for
         LPAD(wins::text, 4, '0') || '.0000.' || 
-        LPAD((point_differential + 10000)::text, 8, '0') || '.' ||
+        LPAD(((points_for - points_against) + 10000)::text, 8, '0') || '.' ||
         LPAD(points_for::text, 8, '0') as tiebreaker_score
     FROM player_results pr
 )
