@@ -3,15 +3,19 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-if (!supabaseUrl) {
-  throw new Error('Missing VITE_SUPABASE_URL environment variable')
+// For demo/development builds without credentials, create a mock client
+const isDemo = !supabaseUrl || !supabaseKey
+
+if (isDemo) {
+  console.warn('⚠️ Running in demo mode - Supabase credentials not configured')
+  console.warn('Authentication and database features will show demo content')
 }
 
-if (!supabaseKey) {
-  throw new Error('Missing VITE_SUPABASE_ANON_KEY environment variable')
-}
+// Use demo values if environment variables aren't set
+const url = supabaseUrl || 'https://demo.supabase.co'
+const key = supabaseKey || 'demo-key'
 
-export const supabase = createClient(supabaseUrl, supabaseKey, {
+export const supabase = createClient(url, key, {
   auth: {
     // Configure 30-day session duration as per PRD requirements
     storage: window.localStorage,
@@ -27,6 +31,9 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     },
   },
 })
+
+// Export demo flag for components to show appropriate demo content
+export { isDemo }
 
 // Export types for use throughout the application
 export type { Database } from '@/types/database'

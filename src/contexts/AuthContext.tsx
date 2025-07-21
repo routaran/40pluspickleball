@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { User as SupabaseUser, Session, AuthError } from '@supabase/supabase-js'
-import { supabase } from '@/services/supabase'
+import { supabase, isDemo } from '@/services/supabase'
 import type { User } from '@/types/database'
 
 // AuthState interface as specified in authentication-flow.md
@@ -83,6 +83,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const initializeAuth = async () => {
       try {
+        // Handle demo mode - skip authentication
+        if (isDemo) {
+          setAuthState(prev => ({ 
+            ...prev, 
+            initialized: true, 
+            loading: false 
+          }))
+          return
+        }
+
         // Get initial session
         const { data: { session }, error } = await supabase.auth.getSession()
         
@@ -178,6 +188,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const signInWithEmail = async (email: string, password: string) => {
     setAuthState(prev => ({ ...prev, loading: true }))
     
+    // Handle demo mode
+    if (isDemo) {
+      setAuthState(prev => ({ ...prev, loading: false }))
+      return { error: { message: 'Demo mode - authentication not available' } as AuthError }
+    }
+    
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -193,6 +209,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Sign up with email (creates user in auth and sends magic link)
   const signUpWithEmail = async (email: string, displayName: string) => {
     setAuthState(prev => ({ ...prev, loading: true }))
+    
+    // Handle demo mode
+    if (isDemo) {
+      setAuthState(prev => ({ ...prev, loading: false }))
+      return { error: { message: 'Demo mode - registration not available' } as AuthError }
+    }
     
     try {
       // First, create the auth user and send magic link
@@ -235,6 +257,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Send magic link for existing users who haven't set password
   const signInWithMagicLink = async (email: string) => {
     setAuthState(prev => ({ ...prev, loading: true }))
+    
+    // Handle demo mode
+    if (isDemo) {
+      setAuthState(prev => ({ ...prev, loading: false }))
+      return { error: { message: 'Demo mode - magic link not available' } as AuthError }
+    }
     
     try {
       const { error } = await supabase.auth.signInWithOtp({
