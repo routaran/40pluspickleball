@@ -71,7 +71,7 @@ CREATE TABLE players (
     notes TEXT,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
     
     -- Ensure unique players by name (can have multiple Johns, but not exact duplicates)
     -- Note: Unique constraint will be added as functional index below
