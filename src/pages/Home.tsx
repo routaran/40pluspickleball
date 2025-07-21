@@ -1,6 +1,7 @@
 
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { isDemo } from '@/services/supabase'
 
 export default function Home() {
   const { user } = useAuth()
@@ -15,6 +16,17 @@ export default function Home() {
         <p className="text-xl text-gray-600 mb-8">
           Professional tournament management for the 40+ pickleball community
         </p>
+        
+        {isDemo && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div className="text-blue-800">
+              <p className="font-medium">🎯 Demo Mode</p>
+              <p className="text-sm mt-1">
+                This is a demonstration of the Week 1 foundation. Authentication and database features show demo content only.
+              </p>
+            </div>
+          </div>
+        )}
         
         {user ? (
           <div className="space-y-4">
