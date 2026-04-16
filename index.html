@@ -102,6 +102,7 @@
 
   .skill-btn.hidden { visibility: hidden; }
   .skill-btn[data-skill="green"] { background: #22c55e; border-color: #16a34a; }
+  .skill-btn[data-skill="blue"] { background: #3b82f6; border-color: #2563eb; }
   .skill-btn[data-skill="orange"] { background: #f97316; border-color: #ea580c; }
   .skill-btn[data-skill="red"] { background: #ef4444; border-color: #dc2626; }
   .skill-btn[data-skill="none"] { background: #e5e5e5; border-color: #ccc; }
@@ -115,8 +116,14 @@
 
   .legend-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
   .legend-dot.green { background: #22c55e; }
+  .legend-dot.blue { background: #3b82f6; }
   .legend-dot.orange { background: #f97316; }
   .legend-dot.red { background: #ef4444; }
+
+  .last-updated {
+    text-align: center; font-size: 0.7rem; color: #999;
+    margin-top: 16px; letter-spacing: 0.5px;
+  }
 
   .btn-row { display: flex; gap: 10px; margin-top: 24px; justify-content: center; }
 
@@ -392,6 +399,7 @@
   <div class="player-list" id="playerList"></div>
   <div class="skill-legend" id="skillLegend" style="display:none;">
     <span><span class="legend-dot green"></span> Advanced</span>
+    <span><span class="legend-dot blue"></span> Upper Int.</span>
     <span><span class="legend-dot orange"></span> Intermediate</span>
     <span><span class="legend-dot red"></span> Beginner</span>
     <span style="color:#aaa;">Click to cycle</span>
@@ -400,6 +408,8 @@
   <div class="btn-row">
     <button class="btn btn-primary" onclick="generate()">Generate Schedule</button>
   </div>
+
+  <div class="last-updated">Last updated: 2026-04-16</div>
 </div>
 
 <!-- PRINTABLE -->
@@ -458,7 +468,7 @@ function setMode(m) {
 }
 
 function toggleSkill(btn) {
-  const cycle = ['green', 'orange', 'red'];
+  const cycle = ['green', 'blue', 'orange', 'red'];
   const cur = btn.dataset.skill;
   const next = cycle[(cycle.indexOf(cur) + 1) % cycle.length];
   btn.dataset.skill = next;
@@ -527,8 +537,10 @@ function generate() {
   timerReset();
 }
 
-// Skill points: green=4, orange=3, red=1
-function skillPts(s) { return s === 'green' ? 4 : s === 'orange' ? 3 : 1; }
+// Skill points: green=4, blue=3, orange=2, red=1
+function skillPts(s) {
+  return s === 'green' ? 4 : s === 'blue' ? 3 : s === 'orange' ? 2 : 1;
+}
 
 function isSameColor(team, skills) {
   return skills[team[0]] === skills[team[1]];
@@ -547,9 +559,15 @@ function isUnfair(team1, team2, skills) {
   }
 
   // Non-green teams: check strength gap (max 2 points)
-  const str1 = skillPts(skills[team1[0]]) + skillPts(skills[team1[1]]);
-  const str2 = skillPts(skills[team2[0]]) + skillPts(skills[team2[1]]);
-  if (Math.abs(str1 - str2) > 2) return true;
+  const p1a = skillPts(skills[team1[0]]), p1b = skillPts(skills[team1[1]]);
+  const p2a = skillPts(skills[team2[0]]), p2b = skillPts(skills[team2[1]]);
+  if (Math.abs((p1a + p1b) - (p2a + p2b)) > 2) return true;
+
+  // Weakest-player rule: the two teams' weaker players must be within 1 tier.
+  // Prevents G+Beginner from facing G+Upper-Int where the beginner gets targeted.
+  const weak1 = Math.min(p1a, p1b);
+  const weak2 = Math.min(p2a, p2b);
+  if (Math.abs(weak1 - weak2) > 1) return true;
 
   return false;
 }
