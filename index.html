@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#2d3e50">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Pickleball RR">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="./icon.svg">
+<link rel="apple-touch-icon" href="./icon.svg">
 <title>Pickleball Round Robin</title>
 <style>
   @page {
@@ -447,6 +454,7 @@ function setMode(m) {
   document.querySelectorAll('.skill-btn').forEach(b => {
     b.classList.toggle('hidden', m === 'random');
   });
+  saveSetup();
 }
 
 function toggleSkill(btn) {
@@ -454,6 +462,7 @@ function toggleSkill(btn) {
   const cur = btn.dataset.skill;
   const next = cycle[(cycle.indexOf(cur) + 1) % cycle.length];
   btn.dataset.skill = next;
+  saveSetup();
 }
 
 // Build player rows
@@ -554,13 +563,6 @@ function matchupKey(team1, team2) {
   return t2.join(',') + '-' + t1.join(',');
 }
 
-// Check if all 4 players on a court share the same skill level
-function isAllSameColor(team1, team2, skills) {
-  const s = skills[team1[0]];
-  return skills[team1[1]] === s && skills[team2[0]] === s && skills[team2[1]] === s;
-}
-
-// Backward compat alias for the green-maximization bias
 function isAllGreen(team1, team2, skills) {
   return skills[team1[0]] === 'green' && skills[team1[1]] === 'green'
       && skills[team2[0]] === 'green' && skills[team2[1]] === 'green';
@@ -855,6 +857,7 @@ function timerStart() {
     clearInterval(timerInterval);
     timerRunning = false;
     btn.textContent = 'Resume';
+    releaseWakeLock();
     return;
   }
 
@@ -868,6 +871,7 @@ function timerStart() {
   timerRunning = true;
   btn.textContent = 'Pause';
   document.getElementById('timerInputRow').style.display = 'none';
+  enableWakeLock();
 
   timerInterval = setInterval(function() {
     timerRemaining--;
@@ -876,6 +880,7 @@ function timerStart() {
       clearInterval(timerInterval);
       timerRunning = false;
       btn.textContent = 'Start Round';
+      releaseWakeLock();
       playAlarm();
     }
   }, 1000);
@@ -885,6 +890,7 @@ function timerReset() {
   clearInterval(timerInterval);
   timerRunning = false;
   stopAlarm();
+  releaseWakeLock();
   timerRemaining = getTimerInputSeconds();
   updateTimerDisplay();
   document.getElementById('timerStartBtn').textContent = 'Start Round';
@@ -904,7 +910,7 @@ function timerEndRound() {
 
 // --- Loud alarm using Web Audio API ---
 let alarmCtx = null;
-let alarmNodes = [];
+let alarmRepeatId = null;
 
 function playAlarm() {
   stopAlarm();
@@ -923,27 +929,119 @@ function playAlarm() {
       const start = alarmCtx.currentTime + i * 0.35;
       osc.start(start);
       osc.stop(start + 0.2);
-      alarmNodes.push(osc);
     }
   }
 
   beepCycle();
-  const repeatId = setInterval(function() {
-    if (!alarmCtx) { clearInterval(repeatId); return; }
-    beepCycle();
-  }, 1500);
-  alarmNodes.repeatId = repeatId;
+  alarmRepeatId = setInterval(beepCycle, 1500);
 }
 
 function stopAlarm() {
-  if (alarmNodes.repeatId) clearInterval(alarmNodes.repeatId);
+  if (alarmRepeatId) { clearInterval(alarmRepeatId); alarmRepeatId = null; }
   if (alarmCtx) { alarmCtx.close(); alarmCtx = null; }
-  alarmNodes = [];
 }
 
-// Init
+// --- Wake Lock ---
+let wakeLock = null;
+let wantWakeLock = false;
+
+async function acquireWakeLock() {
+  if (!('wakeLock' in navigator)) return;
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', () => { wakeLock = null; });
+  } catch {}
+}
+
+function enableWakeLock() {
+  wantWakeLock = true;
+  acquireWakeLock();
+}
+
+function releaseWakeLock() {
+  wantWakeLock = false;
+  if (wakeLock) {
+    wakeLock.release().catch(() => {});
+    wakeLock = null;
+  }
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (wantWakeLock && document.visibilityState === 'visible' && !wakeLock) {
+    acquireWakeLock();
+  }
+});
+
+// --- Setup persistence ---
+const STORAGE_KEY = 'pickleball-rr-setup-v1';
+let isLoadingSetup = false;
+
+function saveSetup() {
+  if (isLoadingSetup) return;
+  try {
+    const data = {
+      courts: [
+        document.getElementById('court1').value,
+        document.getElementById('court2').value,
+      ],
+      players: Array.from({ length: 8 }, (_, i) => document.getElementById(`p${i + 1}`).value),
+      skills: Array.from({ length: 8 }, (_, i) => document.getElementById(`sk${i + 1}`).dataset.skill),
+      mode,
+      timerMin: document.getElementById('timerMin').value,
+      timerSec: document.getElementById('timerSec').value,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch {}
+}
+
+function loadSetup() {
+  let data;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    data = JSON.parse(raw);
+  } catch { return; }
+
+  isLoadingSetup = true;
+  try {
+    if (Array.isArray(data.courts)) {
+      if (data.courts[0]) document.getElementById('court1').value = data.courts[0];
+      if (data.courts[1]) document.getElementById('court2').value = data.courts[1];
+    }
+    if (Array.isArray(data.players)) {
+      data.players.forEach((v, i) => {
+        const el = document.getElementById(`p${i + 1}`);
+        if (el && v) el.value = v;
+      });
+    }
+    if (Array.isArray(data.skills)) {
+      data.skills.forEach((v, i) => {
+        const el = document.getElementById(`sk${i + 1}`);
+        if (el && v) el.dataset.skill = v;
+      });
+    }
+    if (data.mode) setMode(data.mode);
+    if (data.timerMin != null) document.getElementById('timerMin').value = data.timerMin;
+    if (data.timerSec != null) document.getElementById('timerSec').value = data.timerSec;
+  } finally {
+    isLoadingSetup = false;
+  }
+}
+
+document.getElementById('setup').addEventListener('input', saveSetup);
+document.getElementById('timerMin').addEventListener('input', saveSetup);
+document.getElementById('timerSec').addEventListener('input', saveSetup);
+
+// --- Init ---
+loadSetup();
 timerRemaining = getTimerInputSeconds();
 updateTimerDisplay();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
 </script>
 
 </body>
