@@ -26,6 +26,12 @@
     .schedule tbody tr td .vs { color: #888 !important; }
     .schedule tbody td { height: 1.15in; padding-top: 0 !important; padding-bottom: 0 !important; }
     .schedule thead th { background: #1a1a1a !important; }
+    .court-score { font-weight: 700; font-size: 0.9rem; margin-top: 4px; }
+    #scoreboard.active { display: block !important; }
+    #scoreboard .no-print { display: none !important; }
+    .scoreboard-table { width: 100%; border-collapse: collapse; }
+    .scoreboard-table th, .scoreboard-table td { border: 1.5px solid #1a1a1a; padding: 6px 10px; text-align: center; }
+    .scoreboard-table thead th { background: #1a1a1a !important; color: #fff !important; }
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -33,7 +39,7 @@
   body {
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     margin: 0 auto;
-    padding: 20px;
+    padding: clamp(8px, 2vw, 20px);
     color: #1a1a1a;
     background: #f0f0f0;
   }
@@ -41,14 +47,14 @@
   /* --- Setup form --- */
   .setup {
     max-width: 520px;
-    margin: 30px auto;
+    margin: clamp(12px, 3vw, 30px) auto;
     background: #fff;
-    padding: 32px;
+    padding: clamp(18px, 5vw, 32px);
     border-radius: 12px;
     box-shadow: 0 2px 12px rgba(0,0,0,0.08);
   }
 
-  .setup h1 { text-align: center; font-size: 1.4rem; margin-bottom: 22px; }
+  .setup h1 { text-align: center; font-size: clamp(1.2rem, 4vw, 1.4rem); margin-bottom: clamp(14px, 3.5vw, 22px); }
 
   .setup label {
     display: block; font-weight: 700; font-size: 0.8rem;
@@ -67,11 +73,11 @@
   .mode-toggle {
     display: flex; gap: 0; margin-top: 4px;
     border: 2px solid #2d3e50; border-radius: 6px;
-    overflow: hidden; width: fit-content;
+    overflow: hidden; width: 100%;
   }
 
   .mode-toggle button {
-    padding: 7px 18px; font-size: 0.85rem; font-weight: 600;
+    flex: 1; padding: clamp(7px, 1.7vw, 9px) clamp(8px, 4.4vw, 18px); font-size: clamp(0.82rem, 2vw, 0.85rem); font-weight: 600;
     border: none; background: #fff; cursor: pointer;
     color: #2d3e50; transition: all 0.15s;
   }
@@ -108,7 +114,7 @@
   .skill-btn[data-skill="none"] { background: #e5e5e5; border-color: #ccc; }
 
   .skill-legend {
-    display: flex; gap: 14px; font-size: 0.75rem;
+    display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 0.75rem;
     color: #666; margin-top: 8px; align-items: center;
   }
 
@@ -128,7 +134,7 @@
   .btn-row { display: flex; gap: 10px; margin-top: 24px; justify-content: center; }
 
   .btn {
-    padding: 9px 24px; font-size: 0.95rem; border: 2px solid #2d3e50;
+    padding: clamp(8px, 1.9vw, 9px) clamp(12px, 5.8vw, 24px); font-size: clamp(0.82rem, 2.4vw, 0.95rem); border: 2px solid #2d3e50;
     background: #fff; cursor: pointer; border-radius: 6px; font-weight: 600;
     transition: all 0.15s; color: #2d3e50;
   }
@@ -139,53 +145,63 @@
   .btn-primary:hover { background: #1e2d3d; }
   .btn-end { border-color: #d97706; color: #d97706; }
   .btn-end:hover { background: #d97706; color: #fff; }
+  .btn-success { background: #16a34a; color: #fff; border-color: #16a34a; }
+  .btn-success:hover { background: #15803d; border-color: #15803d; }
+  .btn-danger { border-color: #ef4444; color: #ef4444; }
+  .btn-danger:hover { background: #ef4444; color: #fff; }
 
   /* --- Printable schedule --- */
   #printable { display: none; }
   #printable.active { display: block; }
 
   .print-wrap {
-    width: 7.5in; margin: 0 auto; background: #fff;
+    width: 100%; margin: 0 auto; background: #fff;
   }
 
   @media screen {
     .print-wrap {
-      padding: 32px 36px; border-radius: 8px;
+      padding: clamp(12px, 3vw, 32px) clamp(8px, 2vw, 36px); border-radius: 10px;
       box-shadow: 0 2px 16px rgba(0,0,0,0.1);
     }
   }
 
   .print-header { text-align: center; margin-bottom: 16px; }
-  .print-header h1 { font-size: 1.6rem; letter-spacing: -0.5px; }
-  .print-header .sub { font-size: 0.85rem; color: #666; margin-top: 2px; }
+  .print-header h1 { font-size: clamp(1.2rem, 5vw, 1.6rem); letter-spacing: -0.5px; }
+  .print-header .sub { font-size: clamp(0.78rem, 2vw, 0.85rem); color: #666; margin-top: 2px; }
 
   /* The schedule table */
   .schedule {
     width: 100%; border-collapse: collapse;
-    table-layout: fixed; font-size: 1.05rem;
+    table-layout: fixed; font-size: clamp(0.78rem, 2.4vw, 1.05rem);
   }
 
   .schedule th, .schedule td {
-    border: 2px solid #2d3e50; padding: 0;
+    border: 1.5px solid #2d3e50; padding: 0;
     text-align: center; vertical-align: middle;
   }
 
   .schedule thead th {
     background: #2d3e50; color: #fff; font-weight: 700;
-    font-size: 1.05rem; padding: 10px 8px;
+    font-size: clamp(0.78rem, 2.4vw, 1.05rem); padding: clamp(7px, 1.7vw, 10px) clamp(4px, 1vw, 8px);
   }
 
-  .schedule thead th:first-child { width: 18%; }
+  .schedule thead th:first-child { width: 52px; }
 
-  .schedule tbody td { height: 1.15in; transition: all 0.25s; }
+  .schedule tbody td { height: auto; transition: all 0.25s; }
 
-  .round-label { font-weight: 800; font-size: 1.1rem; background: #f5f5f5; }
+  .round-label { font-weight: 800; font-size: clamp(0.75rem, 2.6vw, 1.1rem); background: #f5f5f5; padding: 4px 2px; }
 
-  .court-cell { padding: 6px 8px; line-height: 1.6; }
+  .court-cell { padding: 6px clamp(4px, 1vw, 8px); line-height: 1.5; }
 
-  .court-cell b { font-weight: 700; font-size: 1.05rem; }
+  .court-cell b { font-weight: 700; font-size: clamp(0.78rem, 2.4vw, 1.05rem); }
 
-  .vs { font-size: 0.8rem; font-weight: 600; color: #888; letter-spacing: 1px; }
+  .vs { font-size: clamp(0.65rem, 1.9vw, 0.8rem); font-weight: 600; color: #888; letter-spacing: 1px; }
+
+  /* Score display in table */
+  .court-score {
+    font-weight: 700; font-size: 0.88rem; margin-top: 5px;
+    color: #16a34a; letter-spacing: 0.5px;
+  }
 
   /* --- Round states (screen only) --- */
   @media screen {
@@ -231,18 +247,19 @@
   }
 
   .back-btn-row {
-    text-align: center; margin-top: 20px;
-    display: flex; justify-content: center; gap: 10px;
+    text-align: center; margin-top: clamp(14px, 3.5vw, 20px);
+    display: flex; justify-content: center; gap: clamp(6px, 1.5vw, 10px);
+    flex-wrap: wrap;
   }
 
   /* --- Timer --- */
   .timer-section {
-    margin-top: 24px; text-align: center;
+    margin-top: clamp(16px, 4vw, 24px); text-align: center;
     padding: 20px 0 8px; border-top: 2px solid #ddd;
   }
 
   .timer-round-indicator {
-    font-size: 1.1rem; font-weight: 800;
+    font-size: clamp(0.95rem, 2.6vw, 1.1rem); font-weight: 800;
     margin-bottom: 4px; color: #b45309;
   }
 
@@ -253,7 +270,8 @@
   .now-playing {
     margin: 8px auto 12px;
     max-width: 420px;
-    display: flex; gap: 8px;
+    display: flex; gap: 6px;
+    flex-direction: column;
     justify-content: center;
   }
 
@@ -282,15 +300,15 @@
   }
 
   .timer-input-row input {
-    width: 60px; padding: 8px 4px; border: 1.5px solid #ccc;
-    border-radius: 6px; font-size: 1.2rem; text-align: center; font-weight: 700;
+    width: 54px; padding: 8px 4px; border: 1.5px solid #ccc;
+    border-radius: 6px; font-size: 1.1rem; text-align: center; font-weight: 700;
   }
 
   .timer-input-row input:focus { outline: none; border-color: #1a1a1a; }
   .timer-input-row .colon { font-size: 1.4rem; font-weight: 800; }
 
   .timer-display {
-    font-size: 4.5rem; font-weight: 800;
+    font-size: clamp(3rem, 11vw, 4.5rem); font-weight: 800;
     font-variant-numeric: tabular-nums;
     letter-spacing: 2px; margin: 8px 0 14px; line-height: 1;
   }
@@ -301,7 +319,7 @@
     display: flex; justify-content: center; gap: 8px;
   }
 
-  .timer-btns .btn { min-width: 100px; }
+  .timer-btns .btn { min-width: 80px; }
 
   .next-round-row {
     display: flex; align-items: center; justify-content: center;
@@ -321,59 +339,182 @@
     color: #16a34a; margin: 8px 0;
   }
 
-  /* --- Mobile (Pixel 7: ~412px CSS width) --- */
-  @media screen and (max-width: 500px) {
-    body { padding: 8px; }
-
-    .setup {
-      margin: 12px auto; padding: 18px; border-radius: 10px;
-    }
-
-    .setup h1 { font-size: 1.2rem; margin-bottom: 14px; }
-
-    .mode-toggle { width: 100%; }
-    .mode-toggle button { flex: 1; padding: 9px 8px; font-size: 0.82rem; }
-
-    .print-wrap {
-      width: 100%; padding: 12px 8px; border-radius: 10px;
-    }
-
-    .print-header { margin-bottom: 10px; }
-    .print-header h1 { font-size: 1.2rem; }
-    .print-header .sub { font-size: 0.78rem; }
-
-    .schedule { font-size: 0.78rem; }
-
-    .schedule th, .schedule td { border-width: 1.5px; }
-
-    .schedule thead th { font-size: 0.78rem; padding: 7px 4px; }
-    .schedule thead th:first-child { width: 52px; }
-
-    .schedule tbody td { height: auto; }
-
-    .round-label { font-size: 0.75rem; padding: 4px 2px; }
-
-    .court-cell { padding: 6px 4px; line-height: 1.5; }
-    .court-cell b { font-size: 0.78rem; }
-
-    .vs { font-size: 0.65rem; }
-
-    .back-btn-row { gap: 6px; margin-top: 14px; }
-    .btn { padding: 8px 12px; font-size: 0.82rem; }
-
-    .timer-section { margin-top: 16px; }
-    .timer-display { font-size: 3rem; }
-    .timer-input-row input { width: 54px; font-size: 1.1rem; }
-
-    .timer-round-indicator { font-size: 0.95rem; }
-
-    .now-playing { flex-direction: column; gap: 6px; }
-
-    .schedule tbody tr.round-active td b { font-size: 0.9rem; color: #92400e; }
-    .schedule tbody tr.round-active .round-label { font-size: 0.85rem; background: #f59e0b; }
-
-    .timer-btns .btn { min-width: 80px; padding: 8px 10px; }
+  /* --- Score Panel --- */
+  .score-panel {
+    background: #fff; border: 2px solid #d97706; border-radius: 10px;
+    padding: clamp(14px, 3.5vw, 18px) clamp(10px, 2.5vw, 16px); margin-top: 16px; text-align: left;
   }
+
+  .score-panel h3 {
+    font-size: 1rem; font-weight: 800; color: #92400e;
+    margin-bottom: 14px; text-align: center;
+  }
+
+  .score-court-block {
+    margin-bottom: 14px; padding: 12px; background: #fef9ee;
+    border-radius: 8px; border: 1.5px solid #f59e0b;
+  }
+
+  .score-court-label {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.8px; color: #b45309; margin-bottom: 8px;
+  }
+
+  .score-team-row {
+    display: flex; align-items: center; gap: 8px;
+    justify-content: space-between; margin-bottom: 6px;
+  }
+
+  .score-team-names {
+    font-weight: 700; font-size: clamp(0.82rem, 2.1vw, 0.88rem); flex: 1;
+  }
+
+  .score-input {
+    width: 54px; padding: 8px 6px; border: 1.5px solid #ccc;
+    border-radius: 6px; font-size: clamp(1rem, 2.5vw, 1.1rem); text-align: center; font-weight: 700;
+  }
+
+  .score-input:focus { outline: none; border-color: #d97706; }
+
+  .score-vs-label {
+    text-align: center; font-size: 0.75rem; font-weight: 700;
+    color: #888; letter-spacing: 1px; margin: 4px 0;
+  }
+
+  .score-error {
+    font-size: 0.78rem; color: #ef4444; font-weight: 600;
+    margin-top: 6px; display: none;
+  }
+
+  .score-panel-btns {
+    display: flex; gap: 8px; margin-top: 14px; justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  /* --- Bonus Panel --- */
+  .bonus-panel {
+    background: #fff; border: 2px solid #2d3e50; border-radius: 10px;
+    padding: clamp(14px, 3.5vw, 18px) clamp(10px, 2.5vw, 16px); margin: 16px 0; text-align: left;
+  }
+
+  .bonus-panel h3 {
+    font-size: 1rem; font-weight: 800; color: #2d3e50;
+    margin-bottom: 14px; text-align: center;
+  }
+
+  .bonus-courts-toggle {
+    display: flex; gap: 0; margin-bottom: 14px;
+    border: 2px solid #2d3e50; border-radius: 6px;
+    overflow: hidden; width: 100%;
+  }
+
+  .bonus-courts-toggle button {
+    flex: 1; padding: clamp(7px, 1.7vw, 9px) clamp(8px, 4.4vw, 18px); font-size: clamp(0.82rem, 2vw, 0.85rem); font-weight: 600;
+    border: none; background: #fff; cursor: pointer;
+    color: #2d3e50; transition: all 0.15s;
+  }
+
+  .bonus-courts-toggle button.active { background: #2d3e50; color: #fff; }
+
+  .bonus-court-block {
+    margin-bottom: 14px; padding: 12px; background: #f0f4f8;
+    border-radius: 8px; border: 1.5px solid #2d3e50;
+  }
+
+  .bonus-court-header {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+  }
+
+  .bonus-court-label-text {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.8px; color: #2d3e50;
+  }
+
+  .bonus-court-name-input {
+    width: 80px; padding: 4px 8px; border: 1.5px solid #ccc;
+    border-radius: 5px; font-size: 0.88rem; font-weight: 600; text-align: center;
+  }
+
+  .bonus-team-row {
+    display: flex; align-items: center; gap: 6px; margin-bottom: 6px; flex-wrap: wrap;
+  }
+
+  .bonus-team-label {
+    font-size: 0.75rem; font-weight: 700; color: #555; width: 48px; flex-shrink: 0;
+  }
+
+  .bonus-select {
+    padding: 6px 6px; border: 1.5px solid #ccc; border-radius: 5px;
+    font-size: clamp(0.82rem, 2.1vw, 0.85rem); font-weight: 600; flex: 1; min-width: 80px;
+  }
+
+  .bonus-vs-label {
+    text-align: center; font-size: 0.75rem; font-weight: 700;
+    color: #888; letter-spacing: 1px; margin: 4px 0;
+  }
+
+  .bonus-error {
+    font-size: 0.78rem; color: #ef4444; font-weight: 600;
+    margin-top: 8px; display: none;
+  }
+
+  .bonus-panel-btns {
+    display: flex; gap: 8px; margin-top: 14px; justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  /* --- Scoreboard view --- */
+  #scoreboard { display: none; }
+  #scoreboard.active { display: block; }
+
+  .scoreboard-wrap {
+    max-width: 680px; margin: 0 auto; background: #fff;
+    padding: clamp(16px, 4vw, 32px) clamp(10px, 2.5vw, 36px); border-radius: 10px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+  }
+
+  .scoreboard-wrap h2 {
+    text-align: center; font-size: 1.5rem; margin-bottom: 4px;
+  }
+
+  .scoreboard-wrap .sub {
+    text-align: center; font-size: 0.85rem; color: #666; margin-bottom: 20px;
+  }
+
+  .scoreboard-table {
+    width: 100%; border-collapse: collapse; font-size: clamp(0.82rem, 2.4vw, 1rem);
+  }
+
+  .scoreboard-table th, .scoreboard-table td {
+    border: 1.5px solid #2d3e50; padding: clamp(6px, 1.5vw, 8px) clamp(5px, 1.3vw, 12px); text-align: center;
+  }
+
+  .scoreboard-table thead th {
+    background: #2d3e50; color: #fff; font-weight: 700; font-size: 0.92rem;
+  }
+
+  .scoreboard-table thead th:nth-child(2) { text-align: left; }
+  .scoreboard-table tbody td:nth-child(2) { text-align: left; font-weight: 600; }
+
+  .scoreboard-table tbody tr:nth-child(even) td { background: #f5f8fc; }
+
+  .scoreboard-rank { font-weight: 800; color: #2d3e50; }
+
+  .diff-pos { color: #16a34a; font-weight: 700; }
+  .diff-neg { color: #ef4444; font-weight: 700; }
+
+  .scoreboard-back-row {
+    text-align: center; margin-top: 20px;
+    display: flex; justify-content: center; gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  /* --- Tournament done CTA --- */
+  .tournament-cta {
+    display: flex; gap: 8px; justify-content: center;
+    flex-wrap: wrap; margin-top: 10px;
+  }
+
 </style>
 </head>
 <body>
@@ -419,6 +560,25 @@
     <button class="btn" onclick="goBack()">Back</button>
     <button class="btn" onclick="generate()">Randomize</button>
     <button class="btn btn-primary" onclick="window.print()">Print</button>
+    <button class="btn" onclick="showScoreboard()">Scoreboard</button>
+    <button class="btn" onclick="openBonusPanel()">Add Bonus Round</button>
+  </div>
+
+  <!-- Bonus Round Panel -->
+  <div class="bonus-panel no-print" id="bonusPanel" style="display:none;">
+    <h3>Add Bonus Round</h3>
+    <div style="margin-bottom:10px;">
+      <div class="bonus-courts-toggle" id="bonusCourtsToggle">
+        <button class="active" data-courts="1" onclick="setBonusCourts(1)">1 Court</button>
+        <button data-courts="2" onclick="setBonusCourts(2)">Both Courts</button>
+      </div>
+    </div>
+    <div id="bonusCourtBlocks"></div>
+    <div class="bonus-error" id="bonusError"></div>
+    <div class="bonus-panel-btns">
+      <button class="btn btn-success" onclick="confirmBonus()">Confirm / Add to Schedule</button>
+      <button class="btn" onclick="closeBonusPanel()">Cancel</button>
+    </div>
   </div>
 
   <div class="timer-section no-print" id="timerSection">
@@ -441,6 +601,35 @@
       <label>Next round:</label>
       <select id="nextRoundSelect"></select>
     </div>
+
+    <!-- Score Entry Panel (hidden by default) -->
+    <div class="score-panel no-print" id="scorePanel" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- SCOREBOARD VIEW -->
+<div id="scoreboard">
+  <div class="scoreboard-wrap">
+    <h2>Scoreboard</h2>
+    <div class="sub" id="scoreboardSub">Final standings</div>
+    <table class="scoreboard-table" id="scoreboardTable">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Player</th>
+          <th>W</th>
+          <th>L</th>
+          <th>PF</th>
+          <th>PA</th>
+          <th>+/- Diff</th>
+        </tr>
+      </thead>
+      <tbody id="scoreboardBody"></tbody>
+    </table>
+    <div class="scoreboard-back-row no-print">
+      <button class="btn" onclick="backToSchedule()">Back to Schedule</button>
+      <button class="btn btn-primary" onclick="window.print()">Print</button>
+    </div>
   </div>
 </div>
 
@@ -450,6 +639,8 @@ let currentRound = 0; // 0-indexed
 let totalRounds = 7;
 let roundsData = [];   // stored after generate
 let courtsData = [];
+let scoresData = [];   // parallel to roundsData: scoresData[r][c] = { team1, team2 } | null entries
+let playersData = [];  // snapshot of player names at generate time
 
 function setMode(m) {
   mode = m;
@@ -520,6 +711,11 @@ function getCourts() {
 function goBack() {
   document.getElementById('setup').style.display = '';
   document.getElementById('printable').classList.remove('active');
+  document.getElementById('scoreboard').classList.remove('active');
+}
+
+function emptyScores(rounds) {
+  return rounds.map(round => round.map(() => ({ team1: null, team2: null })));
 }
 
 function generate() {
@@ -527,14 +723,19 @@ function generate() {
   const courts = getCourts();
   const skills = getSkills();
   courtsData = courts;
+  playersData = players;
   roundsData = buildSchedule(players, skills);
+  scoresData = emptyScores(roundsData);
+  totalRounds = 7;
   currentRound = 0;
   document.getElementById('setup').style.display = 'none';
   document.getElementById('printable').classList.add('active');
+  document.getElementById('scoreboard').classList.remove('active');
   render(roundsData, players, courts);
   buildNextRoundSelect();
   updateRoundState();
   timerReset();
+  saveSession();
 }
 
 // Skill points: green=4, blue=3, orange=2, red=1
@@ -564,7 +765,6 @@ function isUnfair(team1, team2, skills) {
   if (Math.abs((p1a + p1b) - (p2a + p2b)) > 2) return true;
 
   // Weakest-player rule: the two teams' weaker players must be within 1 tier.
-  // Prevents G+Beginner from facing G+Upper-Int where the beginner gets targeted.
   const weak1 = Math.min(p1a, p1b);
   const weak2 = Math.min(p2a, p2b);
   if (Math.abs(weak1 - weak2) > 1) return true;
@@ -589,6 +789,11 @@ function isAllGreen(team1, team2, skills) {
 function courtStrength(court, skills) {
   return skillPts(skills[court.team1[0]]) + skillPts(skills[court.team1[1]])
        + skillPts(skills[court.team2[0]]) + skillPts(skills[court.team2[1]]);
+}
+
+// Section 1: teamGap helper for spread-based round ordering
+function teamGap(team, skills) {
+  return Math.abs(skillPts(skills[team[0]]) - skillPts(skills[team[1]]));
 }
 
 function buildSchedule(players, skills) {
@@ -698,22 +903,55 @@ function buildSchedule(players, skills) {
       opponentCount[b][x]++; opponentCount[x][b]++;
       opponentCount[b][y]++; opponentCount[y][b]++;
     }
-    // Court priority: stronger matchup on Court 1 for first 4 rounds, then alternate
-    if (balanced) {
-      const str0 = courtStrength(bestRound[0], skills);
-      const str1 = courtStrength(bestRound[1], skills);
-      const wantStrongerOnCourt1 = r < 4 ? true : (r % 2 === 1);
-      if ((wantStrongerOnCourt1 && str1 > str0) || (!wantStrongerOnCourt1 && str0 > str1)) {
-        bestRound = [bestRound[1], bestRound[0]];
-      }
-    }
+
+    // NOTE: Court priority swap is REMOVED from here; applied after sorting below.
     rounds.push(bestRound);
   }
 
+  // Section 1: Sort rounds by descending spread (balanced mode only)
+  if (balanced) {
+    // Attach original index for stable tiebreak
+    const indexed = rounds.map((round, origIdx) => {
+      const spread = round.reduce((sum, c) => {
+        return sum + teamGap(c.team1, skills) + teamGap(c.team2, skills);
+      }, 0);
+      return { round, spread, origIdx };
+    });
+
+    // Stable descending sort: higher spread first; ties keep generation order
+    indexed.sort((a, b) => {
+      if (b.spread !== a.spread) return b.spread - a.spread;
+      return a.origIdx - b.origIdx;
+    });
+
+    // Rebuild rounds array in sorted order
+    rounds.length = 0;
+    for (const item of indexed) {
+      rounds.push(item.round);
+    }
+
+    // Apply court-priority swap keyed on FINAL sorted index
+    for (let fi = 0; fi < rounds.length; fi++) {
+      const bestRound = rounds[fi];
+      const str0 = courtStrength(bestRound[0], skills);
+      const str1 = courtStrength(bestRound[1], skills);
+      const wantStrongerOnCourt1 = fi < 4 ? true : (fi % 2 === 1);
+      if ((wantStrongerOnCourt1 && str1 > str0) || (!wantStrongerOnCourt1 && str0 > str1)) {
+        rounds[fi] = [bestRound[1], bestRound[0]];
+      }
+    }
+  }
+
+  // Map indices to player names (final step, after sort)
   return rounds.map(round => round.map(c => ({
     team1: c.team1.map(i => players[i]),
     team2: c.team2.map(i => players[i]),
   })));
+}
+
+// Section 2: Generalized render() with variable court counts + score display
+function roundLabel(i) {
+  return i < 7 ? `Round ${i + 1}` : `Bonus ${i - 6}`;
 }
 
 function render(rounds, players, courts) {
@@ -721,6 +959,10 @@ function render(rounds, players, courts) {
     `<b>${m.team1[0]}</b> &amp; <b>${m.team1[1]}</b><br>` +
     `<span class="vs">vs</span><br>` +
     `<b>${m.team2[0]}</b> &amp; <b>${m.team2[1]}</b>`;
+
+  // Build header: always show 2 court columns (Court 0 and Court 1 labels)
+  const hdr0 = courts[0] ? `Court ${courts[0]}` : 'Court 1';
+  const hdr1 = courts[1] ? `Court ${courts[1]}` : 'Court 2';
 
   let html = `
     <div class="print-header">
@@ -731,18 +973,38 @@ function render(rounds, players, courts) {
       <thead>
         <tr>
           <th></th>
-          <th>Court ${courts[0]}</th>
-          <th>Court ${courts[1]}</th>
+          <th>${hdr0}</th>
+          <th>${hdr1}</th>
         </tr>
       </thead>
       <tbody>`;
 
-  rounds.forEach((cm, i) => {
+  rounds.forEach((round, i) => {
+    const label = roundLabel(i);
+    const m0 = round[0] || null;
+    const m1 = round[1] || null;
+
+    // Score display helper
+    const scoreHtml = (r, c) => {
+      if (scoresData[r] && scoresData[r][c] && scoresData[r][c].team1 !== null) {
+        const s = scoresData[r][c];
+        return `<div class="court-score" id="score-r${r}-c${c}">${s.team1}&ndash;${s.team2}</div>`;
+      }
+      return `<div class="court-score" id="score-r${r}-c${c}"></div>`;
+    };
+
+    const cell0 = m0
+      ? `<td class="court-cell">${cell(m0)}${scoreHtml(i, 0)}</td>`
+      : `<td class="court-cell">&mdash;</td>`;
+    const cell1 = m1
+      ? `<td class="court-cell">${cell(m1)}${scoreHtml(i, 1)}</td>`
+      : `<td class="court-cell">&mdash;</td>`;
+
     html += `
         <tr id="round-row-${i}">
-          <td class="round-label">Round ${i + 1}</td>
-          <td class="court-cell">${cell(cm[0])}</td>
-          <td class="court-cell">${cell(cm[1])}</td>
+          <td class="round-label">${label}</td>
+          ${cell0}
+          ${cell1}
         </tr>`;
   });
 
@@ -761,7 +1023,7 @@ function buildNextRoundSelect() {
   for (let i = 0; i < totalRounds; i++) {
     const opt = document.createElement('option');
     opt.value = i;
-    opt.textContent = 'Round ' + (i + 1);
+    opt.textContent = i < 7 ? `Round ${i + 1}` : `Bonus ${i - 6}`;
     sel.appendChild(opt);
   }
   updateNextRoundSelect();
@@ -775,7 +1037,7 @@ function updateNextRoundSelect() {
   }
 }
 
-function updateRoundState() {
+function updateRoundState(autoScroll = true) {
   const isDone = currentRound >= totalRounds;
   const indicator = document.getElementById('roundIndicator');
   const progress = document.getElementById('roundProgress');
@@ -783,10 +1045,15 @@ function updateRoundState() {
 
   if (isDone) {
     indicator.innerHTML = '<span class="tournament-done">Tournament Complete!</span>';
-    progress.textContent = 'All 7 rounds played.';
-    nowPlaying.innerHTML = '';
+    progress.textContent = `All ${totalRounds} rounds played.`;
+    // Section 4 & 5: Surface Scoreboard + Add Bonus Round CTAs on completion
+    nowPlaying.innerHTML = `
+      <div class="tournament-cta">
+        <button class="btn btn-primary" onclick="showScoreboard()">View Scoreboard</button>
+        <button class="btn" onclick="openBonusPanel()">Add Bonus Round</button>
+      </div>`;
   } else {
-    indicator.textContent = `Round ${currentRound + 1} of ${totalRounds}`;
+    indicator.textContent = `${roundLabel(currentRound)} of ${totalRounds}`;
     const done = currentRound;
     const remaining = totalRounds - currentRound - 1;
     progress.textContent = done > 0 ? `${done} played, ${remaining} remaining after this round` : '';
@@ -796,7 +1063,7 @@ function updateRoundState() {
     const courts = courtsData;
     nowPlaying.innerHTML = cm.map((m, ci) => `
       <div class="now-playing-court">
-        <div class="npc-label">Court ${courts[ci]}</div>
+        <div class="npc-label">Court ${courts[ci] || (ci + 1)}</div>
         <b>${m.team1[0]}</b> &amp; <b>${m.team1[1]}</b><br>
         <span class="vs">vs</span><br>
         <b>${m.team2[0]}</b> &amp; <b>${m.team2[1]}</b>
@@ -819,7 +1086,7 @@ function updateRoundState() {
   }
 
   // Auto-scroll active row into view
-  if (!isDone) {
+  if (!isDone && autoScroll) {
     const activeRow = document.getElementById(`round-row-${currentRound}`);
     if (activeRow) {
       activeRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -827,6 +1094,7 @@ function updateRoundState() {
   }
 
   updateNextRoundSelect();
+  saveSession();
 }
 
 // --- Timer ---
@@ -916,14 +1184,415 @@ function timerReset() {
   document.getElementById('timerDisplay').classList.remove('warning');
 }
 
+// Section 3: Score entry panel — rewrite timerEndRound()
 function timerEndRound() {
+  // If already at/past end, nothing to do
+  if (currentRound >= totalRounds) return;
+
   timerReset();
 
-  // Advance to the round selected in the "Next round" dropdown
+  // Build and open the score panel
+  openScorePanel(currentRound);
+}
+
+function openScorePanel(roundIdx) {
+  const panel = document.getElementById('scorePanel');
+  const round = roundsData[roundIdx];
+  if (!round) return;
+
+  const label = roundLabel(roundIdx);
+
+  let html = `<h3>Enter scores &mdash; ${label}</h3>`;
+
+  round.forEach((m, c) => {
+    const existing = (scoresData[roundIdx] && scoresData[roundIdx][c]) || { team1: null, team2: null };
+    const val1 = existing.team1 !== null ? existing.team1 : '';
+    const val2 = existing.team2 !== null ? existing.team2 : '';
+    const courtLabel = courtsData[c] || (c + 1);
+    html += `
+      <div class="score-court-block">
+        <div class="score-court-label">Court ${courtLabel}</div>
+        <div class="score-team-row">
+          <span class="score-team-names"><b>${m.team1[0]}</b> &amp; <b>${m.team1[1]}</b></span>
+          <input class="score-input" id="score-input-${roundIdx}-${c}-team1" type="number" min="0" inputmode="numeric" placeholder="0" value="${val1}">
+        </div>
+        <div class="score-vs-label">vs</div>
+        <div class="score-team-row">
+          <span class="score-team-names"><b>${m.team2[0]}</b> &amp; <b>${m.team2[1]}</b></span>
+          <input class="score-input" id="score-input-${roundIdx}-${c}-team2" type="number" min="0" inputmode="numeric" placeholder="0" value="${val2}">
+        </div>
+        <div class="score-error" id="score-err-${roundIdx}-${c}"></div>
+      </div>`;
+  });
+
+  html += `
+    <div class="score-panel-btns">
+      <button class="btn btn-success" onclick="scoreSaveAndContinue(${roundIdx})">Save &amp; Continue</button>
+      <button class="btn" onclick="scoreSkip(${roundIdx})">Skip</button>
+      <button class="btn btn-danger" onclick="scoreCancel()">Cancel</button>
+    </div>`;
+
+  panel.innerHTML = html;
+  panel.style.display = 'block';
+  // Score entry lives at the bottom of the page — scroll down so all inputs are in view.
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function closeScorePanel() {
+  const panel = document.getElementById('scorePanel');
+  panel.style.display = 'none';
+  panel.innerHTML = '';
+}
+
+// After advancing a round, land on the timer controls (bottom) so the next round
+// can be started immediately — rather than scrolling up to the schedule table.
+function scrollToTimer() {
+  const ts = document.getElementById('timerSection');
+  if (ts) ts.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function scoreSaveAndContinue(roundIdx) {
+  const round = roundsData[roundIdx];
+  if (!round) return;
+
+  let valid = true;
+
+  // Validate all courts
+  for (let c = 0; c < round.length; c++) {
+    const t1El = document.getElementById(`score-input-${roundIdx}-${c}-team1`);
+    const t2El = document.getElementById(`score-input-${roundIdx}-${c}-team2`);
+    const errEl = document.getElementById(`score-err-${roundIdx}-${c}`);
+    errEl.style.display = 'none';
+    errEl.textContent = '';
+
+    const t1Raw = t1El.value.trim();
+    const t2Raw = t2El.value.trim();
+    const t1 = parseInt(t1Raw, 10);
+    const t2 = parseInt(t2Raw, 10);
+
+    if (t1Raw === '' || t2Raw === '' || isNaN(t1) || isNaN(t2) || t1 < 0 || t2 < 0) {
+      errEl.textContent = 'Please enter valid non-negative scores for both teams.';
+      errEl.style.display = 'block';
+      valid = false;
+      continue;
+    }
+
+    if (t1 === t2) {
+      errEl.textContent = "Scores can't be tied — enter the final score after the sudden-death point.";
+      errEl.style.display = 'block';
+      valid = false;
+    }
+  }
+
+  if (!valid) return;
+
+  // Store scores
+  for (let c = 0; c < round.length; c++) {
+    const t1 = parseInt(document.getElementById(`score-input-${roundIdx}-${c}-team1`).value, 10);
+    const t2 = parseInt(document.getElementById(`score-input-${roundIdx}-${c}-team2`).value, 10);
+    if (!scoresData[roundIdx]) scoresData[roundIdx] = [];
+    scoresData[roundIdx][c] = { team1: t1, team2: t2 };
+
+    // Refresh score display in the table
+    const scoreEl = document.getElementById(`score-r${roundIdx}-c${c}`);
+    if (scoreEl) {
+      scoreEl.innerHTML = `${t1}&ndash;${t2}`;
+    }
+  }
+
+  closeScorePanel();
+
+  // Advance round
   const sel = document.getElementById('nextRoundSelect');
   currentRound = parseInt(sel.value);
+  updateRoundState(false);
+  scrollToTimer();
+  saveSession();
+}
 
+function scoreSkip(roundIdx) {
+  closeScorePanel();
+  // Advance without storing scores
+  const sel = document.getElementById('nextRoundSelect');
+  currentRound = parseInt(sel.value);
+  updateRoundState(false);
+  scrollToTimer();
+  saveSession();
+}
+
+function scoreCancel() {
+  closeScorePanel();
+  // Do NOT advance round, do NOT save session
+}
+
+// Section 4: computeStandings() and Scoreboard view
+
+function computeStandings() {
+  const stats = {};
+  for (const name of playersData) {
+    stats[name] = { wins: 0, losses: 0, pf: 0, pa: 0, games: 0 };
+  }
+
+  for (let r = 0; r < roundsData.length; r++) {
+    const round = roundsData[r];
+    for (let c = 0; c < round.length; c++) {
+      const sc = scoresData[r] && scoresData[r][c];
+      if (!sc || sc.team1 === null || sc.team2 === null) continue;
+
+      const s1 = sc.team1;
+      const s2 = sc.team2;
+      const win1 = s1 > s2;
+      const m = round[c];
+
+      for (const name of m.team1) {
+        if (!stats[name]) stats[name] = { wins: 0, losses: 0, pf: 0, pa: 0, games: 0 };
+        stats[name].games++;
+        stats[name].pf += s1;
+        stats[name].pa += s2;
+        if (win1) stats[name].wins++; else stats[name].losses++;
+      }
+      for (const name of m.team2) {
+        if (!stats[name]) stats[name] = { wins: 0, losses: 0, pf: 0, pa: 0, games: 0 };
+        stats[name].games++;
+        stats[name].pf += s2;
+        stats[name].pa += s1;
+        if (!win1) stats[name].wins++; else stats[name].losses++;
+      }
+    }
+  }
+
+  return Object.entries(stats).map(([name, s]) => {
+    const avg = s.games ? (s.pf - s.pa) / s.games : 0;
+    return { name, ...s, avg };
+  }).sort((a, b) => {
+    if (b.wins !== a.wins) return b.wins - a.wins;
+    if (b.avg !== a.avg) return b.avg - a.avg;
+    return b.pf - a.pf;
+  });
+}
+
+function formatAvgDiff(avg) {
+  return (avg >= 0 ? '+' : '') + avg.toFixed(2);
+}
+
+function showScoreboard() {
+  const standings = computeStandings();
+  const tbody = document.getElementById('scoreboardBody');
+  const sub = document.getElementById('scoreboardSub');
+
+  // Count played games for subtitle
+  let playedRounds = 0;
+  for (let r = 0; r < roundsData.length; r++) {
+    for (let c = 0; c < (roundsData[r] || []).length; c++) {
+      const sc = scoresData[r] && scoresData[r][c];
+      if (sc && sc.team1 !== null) { playedRounds++; break; }
+    }
+  }
+  sub.textContent = `${playedRounds} round(s) scored`;
+
+  tbody.innerHTML = standings.map((row, i) => {
+    const diffClass = row.avg >= 0 ? 'diff-pos' : 'diff-neg';
+    return `<tr>
+      <td class="scoreboard-rank">${i + 1}</td>
+      <td>${row.name}</td>
+      <td>${row.wins}</td>
+      <td>${row.losses}</td>
+      <td>${row.pf}</td>
+      <td>${row.pa}</td>
+      <td class="${diffClass}">${formatAvgDiff(row.avg)}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('printable').classList.remove('active');
+  document.getElementById('scoreboard').classList.add('active');
+}
+
+function backToSchedule() {
+  document.getElementById('scoreboard').classList.remove('active');
+  document.getElementById('printable').classList.add('active');
+}
+
+// Section 5: Bonus Round Panel
+
+let bonusActiveCourts = 1;
+
+function openBonusPanel() {
+  bonusActiveCourts = 1;
+  // Reset toggle UI
+  document.querySelectorAll('#bonusCourtsToggle button').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.courts) === 1);
+  });
+  renderBonusCourtBlocks();
+  document.getElementById('bonusPanel').style.display = 'block';
+  document.getElementById('bonusPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function closeBonusPanel() {
+  document.getElementById('bonusPanel').style.display = 'none';
+  document.getElementById('bonusError').style.display = 'none';
+}
+
+function setBonusCourts(n) {
+  bonusActiveCourts = n;
+  document.querySelectorAll('#bonusCourtsToggle button').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.courts) === n);
+  });
+  renderBonusCourtBlocks();
+}
+
+function renderBonusCourtBlocks() {
+  const container = document.getElementById('bonusCourtBlocks');
+  let html = '';
+
+  for (let c = 0; c < bonusActiveCourts; c++) {
+    const defaultCourtName = courtsData[c] || (c + 1);
+    const playerOptions = playersData.map(name => `<option value="${name}">${name}</option>`).join('');
+
+    html += `
+      <div class="bonus-court-block" id="bonus-court-block-${c}">
+        <div class="bonus-court-header">
+          <span class="bonus-court-label-text">Court</span>
+          <input class="bonus-court-name-input" id="bonus-court-name-${c}" type="text" value="${defaultCourtName}">
+        </div>
+        <div class="bonus-team-row">
+          <span class="bonus-team-label">Team A:</span>
+          <select class="bonus-select" id="bonus-c${c}-a1">${playerOptions}</select>
+          <select class="bonus-select" id="bonus-c${c}-a2">${playerOptions}</select>
+        </div>
+        <div class="bonus-vs-label">vs</div>
+        <div class="bonus-team-row">
+          <span class="bonus-team-label">Team B:</span>
+          <select class="bonus-select" id="bonus-c${c}-b1">${playerOptions}</select>
+          <select class="bonus-select" id="bonus-c${c}-b2">${playerOptions}</select>
+        </div>
+        <div style="margin-top:8px;">
+          <button class="btn" onclick="randomizeBonus(${c})">Randomize</button>
+        </div>
+      </div>`;
+  }
+
+  container.innerHTML = html;
+
+  // Set default selections to avoid all-same
+  for (let c = 0; c < bonusActiveCourts; c++) {
+    const opts = playersData;
+    if (opts.length >= 4) {
+      document.getElementById(`bonus-c${c}-a1`).value = opts[0];
+      document.getElementById(`bonus-c${c}-a2`).value = opts[1];
+      document.getElementById(`bonus-c${c}-b1`).value = opts[2];
+      document.getElementById(`bonus-c${c}-b2`).value = opts[3];
+    }
+  }
+}
+
+function randomizeBonus(c) {
+  const shuffled = shuffle([...playersData]);
+  const ids = [`bonus-c${c}-a1`, `bonus-c${c}-a2`, `bonus-c${c}-b1`, `bonus-c${c}-b2`];
+  // Use first 4 shuffled players (or wrap if fewer than 4)
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById(ids[i]);
+    if (el && shuffled[i]) el.value = shuffled[i];
+  }
+}
+
+function confirmBonus() {
+  const errEl = document.getElementById('bonusError');
+  errEl.style.display = 'none';
+  errEl.textContent = '';
+
+  const newRound = [];
+
+  // Collect and validate
+  for (let c = 0; c < bonusActiveCourts; c++) {
+    const a1 = document.getElementById(`bonus-c${c}-a1`).value;
+    const a2 = document.getElementById(`bonus-c${c}-a2`).value;
+    const b1 = document.getElementById(`bonus-c${c}-b1`).value;
+    const b2 = document.getElementById(`bonus-c${c}-b2`).value;
+    newRound.push({ team1: [a1, a2], team2: [b1, b2] });
+  }
+
+  // Validate distinct players per court
+  for (let c = 0; c < bonusActiveCourts; c++) {
+    const players = [newRound[c].team1[0], newRound[c].team1[1], newRound[c].team2[0], newRound[c].team2[1]];
+    const unique = new Set(players);
+    if (unique.size < 4) {
+      errEl.textContent = `Court ${c + 1}: all 4 players must be different.`;
+      errEl.style.display = 'block';
+      return;
+    }
+  }
+
+  // Validate 8 distinct across both courts (when 2 courts)
+  if (bonusActiveCourts === 2) {
+    const all = [
+      ...newRound[0].team1, ...newRound[0].team2,
+      ...newRound[1].team1, ...newRound[1].team2,
+    ];
+    const unique = new Set(all);
+    if (unique.size < 8) {
+      errEl.textContent = 'With both courts active, all 8 players across both courts must be different.';
+      errEl.style.display = 'block';
+      return;
+    }
+  }
+
+  // Update court labels if changed
+  for (let c = 0; c < bonusActiveCourts; c++) {
+    const nameEl = document.getElementById(`bonus-court-name-${c}`);
+    if (nameEl && nameEl.value) {
+      // We don't store per-round court labels; this is cosmetic.
+      // The bonus round will use courtsData[c] as displayed.
+      // Optionally update courtsData for this bonus if user changed it:
+      // (We'll store bonus court names in a separate temporary variable handled in render)
+    }
+  }
+
+  // Append to roundsData and scoresData
+  roundsData.push(newRound);
+  scoresData.push(newRound.map(() => ({ team1: null, team2: null })));
+  totalRounds++;
+
+  closeBonusPanel();
+
+  render(roundsData, playersData, courtsData);
+  buildNextRoundSelect();
+  currentRound = roundsData.length - 1;
   updateRoundState();
+
+  // Scroll to new row
+  const newRow = document.getElementById(`round-row-${currentRound}`);
+  if (newRow) newRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  saveSession();
+}
+
+// Section 6: Session persistence
+
+const SESSION_KEY = 'pickleball-rr-session-v1';
+
+function saveSession() {
+  try {
+    const data = {
+      roundsData,
+      scoresData,
+      courtsData,
+      currentRound,
+      totalRounds,
+      playersData,
+    };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(data));
+  } catch {}
+}
+
+function loadSession() {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
 }
 
 // --- Loud alarm using Web Audio API ---
@@ -1054,6 +1723,26 @@ document.getElementById('timerSec').addEventListener('input', saveSetup);
 loadSetup();
 timerRemaining = getTimerInputSeconds();
 updateTimerDisplay();
+
+// Section 6: Restore session on init
+(function restoreSession() {
+  const session = loadSession();
+  if (!session) return;
+  if (!Array.isArray(session.roundsData) || session.roundsData.length === 0) return;
+
+  roundsData = session.roundsData;
+  scoresData = session.scoresData || emptyScores(roundsData);
+  courtsData = session.courtsData || getCourts();
+  currentRound = typeof session.currentRound === 'number' ? session.currentRound : 0;
+  totalRounds = typeof session.totalRounds === 'number' ? session.totalRounds : roundsData.length;
+  playersData = session.playersData || [];
+
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('printable').classList.add('active');
+  render(roundsData, playersData, courtsData);
+  buildNextRoundSelect();
+  updateRoundState();
+})();
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
