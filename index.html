@@ -62,13 +62,6 @@
     margin-bottom: 5px; margin-top: 16px; color: #555;
   }
 
-  .court-inputs { display: flex; gap: 10px; }
-
-  .court-inputs input {
-    width: 80px; padding: 8px 10px; border: 1.5px solid #ccc;
-    border-radius: 6px; font-size: 1rem; text-align: center;
-  }
-
   /* Mode toggle */
   .mode-toggle {
     display: flex; gap: 0; margin-top: 4px;
@@ -226,12 +219,12 @@
     }
     .schedule tbody tr.round-active td b {
       color: #92400e;
-      font-size: 1.15rem;
+      font-size: clamp(0.75rem, 2.5vw, 1.1rem);
     }
     .schedule tbody tr.round-active .round-label {
       background: #f59e0b;
       color: #fff;
-      font-size: 1.2rem;
+      font-size: clamp(0.75rem, 2.5vw, 1.1rem);
       border-color: #d97706;
     }
     .schedule tbody tr.round-active .vs { color: #b45309; }
@@ -523,12 +516,6 @@
 <div class="setup no-print" id="setup">
   <h1>Pickleball Round Robin</h1>
 
-  <label>Court Numbers</label>
-  <div class="court-inputs">
-    <input id="court1" type="text" placeholder="e.g. 13">
-    <input id="court2" type="text" placeholder="e.g. 14">
-  </div>
-
   <label>Matchmaking</label>
   <div class="mode-toggle" id="modeToggle">
     <button class="active" data-mode="random" onclick="setMode('random')">Fully Random</button>
@@ -702,10 +689,7 @@ function getSkills() {
 }
 
 function getCourts() {
-  return [
-    document.getElementById('court1').value.trim() || '1',
-    document.getElementById('court2').value.trim() || '2',
-  ];
+  return ['A', 'B'];
 }
 
 function goBack() {
@@ -930,16 +914,13 @@ function buildSchedule(players, skills) {
       rounds.push(item.round);
     }
 
-    // Apply court-priority swap keyed on FINAL sorted index
-    for (let fi = 0; fi < rounds.length; fi++) {
-      const bestRound = rounds[fi];
-      const str0 = courtStrength(bestRound[0], skills);
-      const str1 = courtStrength(bestRound[1], skills);
-      const wantStrongerOnCourt1 = fi < 4 ? true : (fi % 2 === 1);
-      if ((wantStrongerOnCourt1 && str1 > str0) || (!wantStrongerOnCourt1 && str0 > str1)) {
-        rounds[fi] = [bestRound[1], bestRound[0]];
-      }
-    }
+  }
+
+  // Always put weaker matchup on Court A (index 0), stronger on Court B (index 1)
+  for (let fi = 0; fi < rounds.length; fi++) {
+    const str0 = courtStrength(rounds[fi][0], skills);
+    const str1 = courtStrength(rounds[fi][1], skills);
+    if (str0 > str1) rounds[fi] = [rounds[fi][1], rounds[fi][0]];
   }
 
   // Map indices to player names (final step, after sort)
@@ -1667,10 +1648,6 @@ function saveSetup() {
   if (isLoadingSetup) return;
   try {
     const data = {
-      courts: [
-        document.getElementById('court1').value,
-        document.getElementById('court2').value,
-      ],
       players: Array.from({ length: 8 }, (_, i) => document.getElementById(`p${i + 1}`).value),
       skills: Array.from({ length: 8 }, (_, i) => document.getElementById(`sk${i + 1}`).dataset.skill),
       mode,
@@ -1691,10 +1668,6 @@ function loadSetup() {
 
   isLoadingSetup = true;
   try {
-    if (Array.isArray(data.courts)) {
-      if (data.courts[0]) document.getElementById('court1').value = data.courts[0];
-      if (data.courts[1]) document.getElementById('court2').value = data.courts[1];
-    }
     if (Array.isArray(data.players)) {
       data.players.forEach((v, i) => {
         const el = document.getElementById(`p${i + 1}`);
