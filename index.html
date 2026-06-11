@@ -251,6 +251,23 @@
     font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
     padding: 3px 9px; border-radius: 999px;
   }
+  .rc-edit-row {
+    margin-top: 8px;
+  }
+  .round-edit-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    color: var(--primary);
+    border-radius: 10px;
+    min-height: 36px;
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    transition: transform 0.15s ease, border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+  }
+  .round-edit-btn:hover { background: var(--muted); }
 
   .rc-court {
     display: flex; align-items: center; gap: 10px;
@@ -722,6 +739,8 @@ let roundsData = [];   // stored after generate
 let courtsData = [];
 let scoresData = [];   // parallel to roundsData: scoresData[r][c] = { team1, team2 } | null entries
 let playersData = [];  // snapshot of player names at generate time
+let scoreSheetMode = 'advance';
+let scoreSheetRound = -1;
 
 const SCROLL_BEHAVIOR = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
 
@@ -1073,6 +1092,8 @@ function renderSchedule() {
     else { state = 'r-upcoming'; statusText = 'Up next'; }
     if (state === 'r-done' && i >= currentRound && isDone) statusText = 'Done';
 
+    const isEditable = i < currentRound;
+
     let courtsHtml = '';
     round.forEach((m, c) => {
       const sc = scoresData[i] && scoresData[i][c];
@@ -1092,6 +1113,10 @@ function renderSchedule() {
         </div>`;
     });
 
+    const editAction = isEditable
+      ? `<div class="rc-edit-row no-print"><button type="button" class="round-edit-btn" onclick="openScorePanel(${i}, 'edit')">Edit scores</button></div>`
+      : '';
+
     html += `
       <div class="round-card ${state}" id="round-card-${i}">
         <div class="rc-head">
@@ -1099,6 +1124,7 @@ function renderSchedule() {
           <span class="rc-status">${statusText}</span>
         </div>
         ${courtsHtml}
+        ${editAction}
       </div>`;
   });
   cardsEl.innerHTML = html;
@@ -1367,14 +1393,18 @@ function scrimTap() {
   }
 }
 
-function openScorePanel(roundIdx) {
+function openScorePanel(roundIdx, mode = 'advance') {
   const body = document.getElementById('scoreSheetBody');
   const round = roundsData[roundIdx];
   if (!round) return;
 
+  const isEditMode = mode === 'edit';
+  scoreSheetMode = isEditMode ? 'edit' : 'advance';
+  scoreSheetRound = roundIdx;
+
   const label = roundLabel(roundIdx);
 
-  let html = `<h3>Enter Scores &mdash; ${label}</h3>`;
+  let html = `<h3>${isEditMode ? 'Edit Scores' : 'Enter Scores'} &mdash; ${label}</h3>`;
 
   round.forEach((m, c) => {
     const existing = (scoresData[roundIdx] && scoresData[roundIdx][c]) || { team1: null, team2: null };
@@ -1401,8 +1431,8 @@ function openScorePanel(roundIdx) {
 
   html += `
     <div class="sheet-btns">
-      <button type="button" class="btn btn-accent" onclick="scoreSaveAndContinue(${roundIdx})">Save &amp; Continue</button>
-      <button type="button" class="btn btn-ghost" onclick="scoreSkip(${roundIdx})">Skip</button>
+      <button type="button" class="btn btn-accent" onclick="scoreSaveAndContinue(${roundIdx})">${isEditMode ? 'Save Changes' : 'Save & Continue'}</button>
+      ${isEditMode ? '' : `<button type="button" class="btn btn-ghost" onclick="scoreSkip(${roundIdx})">Skip</button>`}
       <button type="button" class="btn btn-danger" onclick="scoreCancel()">Cancel</button>
     </div>`;
 
@@ -1413,6 +1443,8 @@ function openScorePanel(roundIdx) {
 function closeScorePanel() {
   closeSheets();
   document.getElementById('scoreSheetBody').innerHTML = '';
+  scoreSheetMode = 'advance';
+  scoreSheetRound = -1;
 }
 
 function scrollToTimer() {
@@ -1424,7 +1456,9 @@ function scoreSaveAndContinue(roundIdx) {
   const round = roundsData[roundIdx];
   if (!round) return;
 
+  const isEditMode = scoreSheetMode === 'edit' && scoreSheetRound === roundIdx;
   let valid = true;
+  const parsedScores = [];
 
   // Validate all courts
   for (let c = 0; c < round.length; c++) {
@@ -1436,34 +1470,45 @@ function scoreSaveAndContinue(roundIdx) {
 
     const t1Raw = t1El.value.trim();
     const t2Raw = t2El.value.trim();
-    const t1 = parseInt(t1Raw, 10);
-    const t2 = parseInt(t2Raw, 10);
 
-    if (t1Raw === '' || t2Raw === '' || isNaN(t1) || isNaN(t2) || t1 < 0 || t2 < 0) {
+    if (!/^\d+$/.test(t1Raw) || !/^\d+$/.test(t2Raw)) {
       errEl.textContent = 'Please enter valid non-negative scores for both teams.';
       errEl.style.display = 'block';
       valid = false;
       continue;
     }
 
+    const t1 = parseInt(t1Raw, 10);
+    const t2 = parseInt(t2Raw, 10);
+
     if (t1 === t2) {
       errEl.textContent = "Scores can't be tied — enter the final score after the sudden-death point.";
       errEl.style.display = 'block';
       valid = false;
+      continue;
     }
+
+    parsedScores[c] = { team1: t1, team2: t2 };
   }
 
   if (!valid) return;
 
   // Store scores
   for (let c = 0; c < round.length; c++) {
-    const t1 = parseInt(document.getElementById(`score-input-${roundIdx}-${c}-team1`).value, 10);
-    const t2 = parseInt(document.getElementById(`score-input-${roundIdx}-${c}-team2`).value, 10);
     if (!scoresData[roundIdx]) scoresData[roundIdx] = [];
-    scoresData[roundIdx][c] = { team1: t1, team2: t2 };
+    scoresData[roundIdx][c] = parsedScores[c];
   }
 
   closeScorePanel();
+
+  if (isEditMode) {
+    renderSchedule();
+    if (activeTab === 'standings') {
+      refreshScoreboard();
+    }
+    saveSession();
+    return;
+  }
 
   // Advance round
   const sel = document.getElementById('nextRoundSelect');
@@ -1474,6 +1519,11 @@ function scoreSaveAndContinue(roundIdx) {
 }
 
 function scoreSkip(roundIdx) {
+  if (scoreSheetMode === 'edit' && scoreSheetRound === roundIdx) {
+    closeScorePanel();
+    return;
+  }
+
   closeScorePanel();
   // Advance without storing scores
   const sel = document.getElementById('nextRoundSelect');
