@@ -1,0 +1,1763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#2d3e50">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Pickleball RR">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="./icon.svg">
+<link rel="apple-touch-icon" href="./icon.svg">
+<title>Pickleball Round Robin</title>
+<style>
+  @page {
+    size: letter;
+    margin: 0.5in;
+  }
+
+  @media print {
+    .no-print { display: none !important; }
+    body { padding: 0; background: #fff; }
+    .schedule tbody tr { opacity: 1 !important; }
+    .schedule tbody tr td { background: none !important; color: #1a1a1a !important; font-size: 1.05rem !important; border-color: #1a1a1a !important; }
+    .schedule tbody tr td b { color: #1a1a1a !important; font-size: 1.05rem !important; }
+    .schedule tbody tr td .vs { color: #888 !important; }
+    .schedule tbody td { height: 1.15in; padding-top: 0 !important; padding-bottom: 0 !important; }
+    .schedule thead th { background: #1a1a1a !important; }
+    .court-score { font-weight: 700; font-size: 0.9rem; margin-top: 4px; }
+    #scoreboard.active { display: block !important; }
+    #scoreboard .no-print { display: none !important; }
+    .scoreboard-table { width: 100%; border-collapse: collapse; }
+    .scoreboard-table th, .scoreboard-table td { border: 1.5px solid #1a1a1a; padding: 6px 10px; text-align: center; }
+    .scoreboard-table thead th { background: #1a1a1a !important; color: #fff !important; }
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    margin: 0 auto;
+    padding: clamp(8px, 2vw, 20px);
+    color: #1a1a1a;
+    background: #f0f0f0;
+  }
+
+  /* --- Setup form --- */
+  .setup {
+    max-width: 520px;
+    margin: clamp(12px, 3vw, 30px) auto;
+    background: #fff;
+    padding: clamp(18px, 5vw, 32px);
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+
+  .setup h1 { text-align: center; font-size: clamp(1.2rem, 4vw, 1.4rem); margin-bottom: clamp(14px, 3.5vw, 22px); }
+
+  .setup label {
+    display: block; font-weight: 700; font-size: 0.8rem;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 5px; margin-top: 16px; color: #555;
+  }
+
+  /* Mode toggle */
+  .mode-toggle {
+    display: flex; gap: 0; margin-top: 4px;
+    border: 2px solid #2d3e50; border-radius: 6px;
+    overflow: hidden; width: 100%;
+  }
+
+  .mode-toggle button {
+    flex: 1; padding: clamp(7px, 1.7vw, 9px) clamp(8px, 4.4vw, 18px); font-size: clamp(0.82rem, 2vw, 0.85rem); font-weight: 600;
+    border: none; background: #fff; cursor: pointer;
+    color: #2d3e50; transition: all 0.15s;
+  }
+
+  .mode-toggle button.active { background: #2d3e50; color: #fff; }
+
+  .mode-hint { font-size: 0.75rem; color: #888; margin-top: 4px; }
+
+  /* Player rows */
+  .player-list { margin-top: 4px; }
+
+  .player-row {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+  }
+
+  .player-row input {
+    flex: 1; padding: 8px 10px; border: 1.5px solid #ccc;
+    border-radius: 6px; font-size: 0.95rem;
+  }
+
+  .player-row input:focus { outline: none; border-color: #1a1a1a; }
+
+  .skill-btn {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 2.5px solid #ccc; cursor: pointer;
+    transition: all 0.15s; flex-shrink: 0;
+  }
+
+  .skill-btn.hidden { visibility: hidden; }
+  .skill-btn[data-skill="green"] { background: #22c55e; border-color: #16a34a; }
+  .skill-btn[data-skill="blue"] { background: #3b82f6; border-color: #2563eb; }
+  .skill-btn[data-skill="orange"] { background: #f97316; border-color: #ea580c; }
+  .skill-btn[data-skill="red"] { background: #ef4444; border-color: #dc2626; }
+  .skill-btn[data-skill="none"] { background: #e5e5e5; border-color: #ccc; }
+
+  .skill-legend {
+    display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 0.75rem;
+    color: #666; margin-top: 8px; align-items: center;
+  }
+
+  .skill-legend span { display: flex; align-items: center; gap: 4px; }
+
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+  .legend-dot.green { background: #22c55e; }
+  .legend-dot.blue { background: #3b82f6; }
+  .legend-dot.orange { background: #f97316; }
+  .legend-dot.red { background: #ef4444; }
+
+  .last-updated {
+    text-align: center; font-size: 0.7rem; color: #999;
+    margin-top: 16px; letter-spacing: 0.5px;
+  }
+
+  .btn-row { display: flex; gap: 10px; margin-top: 24px; justify-content: center; }
+
+  .btn {
+    padding: clamp(8px, 1.9vw, 9px) clamp(12px, 5.8vw, 24px); font-size: clamp(0.82rem, 2.4vw, 0.95rem); border: 2px solid #2d3e50;
+    background: #fff; cursor: pointer; border-radius: 6px; font-weight: 600;
+    transition: all 0.15s; color: #2d3e50;
+  }
+  .btn:hover { background: #2d3e50; color: #fff; }
+  .btn-start { background: #16a34a; color: #fff; border-color: #16a34a; }
+  .btn-start:hover { background: #15803d; border-color: #15803d; }
+  .btn-primary { background: #2d3e50; color: #fff; }
+  .btn-primary:hover { background: #1e2d3d; }
+  .btn-end { border-color: #d97706; color: #d97706; }
+  .btn-end:hover { background: #d97706; color: #fff; }
+  .btn-success { background: #16a34a; color: #fff; border-color: #16a34a; }
+  .btn-success:hover { background: #15803d; border-color: #15803d; }
+  .btn-danger { border-color: #ef4444; color: #ef4444; }
+  .btn-danger:hover { background: #ef4444; color: #fff; }
+
+  /* --- Printable schedule --- */
+  #printable { display: none; }
+  #printable.active { display: block; }
+
+  .print-wrap {
+    width: 100%; margin: 0 auto; background: #fff;
+  }
+
+  @media screen {
+    .print-wrap {
+      padding: clamp(12px, 3vw, 32px) clamp(8px, 2vw, 36px); border-radius: 10px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+    }
+  }
+
+  .print-header { text-align: center; margin-bottom: 16px; }
+  .print-header h1 { font-size: clamp(1.2rem, 5vw, 1.6rem); letter-spacing: -0.5px; }
+  .print-header .sub { font-size: clamp(0.78rem, 2vw, 0.85rem); color: #666; margin-top: 2px; }
+
+  /* The schedule table */
+  .schedule {
+    width: 100%; border-collapse: collapse;
+    table-layout: fixed; font-size: clamp(0.78rem, 2.4vw, 1.05rem);
+  }
+
+  .schedule th, .schedule td {
+    border: 1.5px solid #2d3e50; padding: 0;
+    text-align: center; vertical-align: middle;
+  }
+
+  .schedule thead th {
+    background: #2d3e50; color: #fff; font-weight: 700;
+    font-size: clamp(0.78rem, 2.4vw, 1.05rem); padding: clamp(7px, 1.7vw, 10px) clamp(4px, 1vw, 8px);
+  }
+
+  .schedule thead th:first-child { width: 52px; }
+
+  .schedule tbody td { height: auto; transition: all 0.25s; }
+
+  .round-label { font-weight: 800; font-size: clamp(0.75rem, 2.6vw, 1.1rem); background: #f5f5f5; padding: 4px 2px; }
+
+  .court-cell { padding: 6px clamp(4px, 1vw, 8px); line-height: 1.5; }
+
+  .court-cell b { font-weight: 700; font-size: clamp(0.78rem, 2.4vw, 1.05rem); }
+
+  .vs { font-size: clamp(0.65rem, 1.9vw, 0.8rem); font-weight: 600; color: #888; letter-spacing: 1px; }
+
+  /* Score display in table */
+  .court-score {
+    font-weight: 700; font-size: 0.88rem; margin-top: 5px;
+    color: #16a34a; letter-spacing: 0.5px;
+  }
+
+  /* --- Round states (screen only) --- */
+  @media screen {
+    .schedule tbody tr.round-done {
+      opacity: 0.45;
+    }
+    .schedule tbody tr.round-done td {
+      height: auto;
+      padding-top: 4px;
+      padding-bottom: 4px;
+      font-size: 0.85rem;
+      background: #f0fdf4;
+    }
+    .schedule tbody tr.round-done .round-label { background: #e8f8ee; }
+    .schedule tbody tr.round-done td b { font-size: 0.85rem; }
+    .schedule tbody tr.round-done .vs { font-size: 0.65rem; }
+
+    .schedule tbody tr.round-active td {
+      background: #fef3c7;
+      color: #1a1a1a;
+      border-color: #d97706;
+    }
+    .schedule tbody tr.round-active td b {
+      color: #92400e;
+      font-size: clamp(0.75rem, 2.5vw, 1.1rem);
+    }
+    .schedule tbody tr.round-active .round-label {
+      background: #f59e0b;
+      color: #fff;
+      font-size: clamp(0.75rem, 2.5vw, 1.1rem);
+      border-color: #d97706;
+    }
+    .schedule tbody tr.round-active .vs { color: #b45309; }
+
+    .schedule tbody tr.round-upcoming {
+      opacity: 0.5;
+    }
+    .schedule tbody tr.round-upcoming td {
+      height: auto;
+      padding-top: 6px;
+      padding-bottom: 6px;
+    }
+  }
+
+  .back-btn-row {
+    text-align: center; margin-top: clamp(14px, 3.5vw, 20px);
+    display: flex; justify-content: center; gap: clamp(6px, 1.5vw, 10px);
+    flex-wrap: wrap;
+  }
+
+  /* --- Timer --- */
+  .timer-section {
+    margin-top: clamp(16px, 4vw, 24px); text-align: center;
+    padding: 20px 0 8px; border-top: 2px solid #ddd;
+  }
+
+  .timer-round-indicator {
+    font-size: clamp(0.95rem, 2.6vw, 1.1rem); font-weight: 800;
+    margin-bottom: 4px; color: #b45309;
+  }
+
+  .timer-progress {
+    font-size: 0.78rem; color: #888; margin-bottom: 12px;
+  }
+
+  .now-playing {
+    margin: 8px auto 12px;
+    max-width: 420px;
+    display: flex; gap: 6px;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .now-playing-court {
+    flex: 1;
+    background: #fef9ee;
+    border: 2px solid #f59e0b;
+    border-radius: 8px;
+    padding: 8px 6px;
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+
+  .now-playing-court .npc-label {
+    font-size: 0.65rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.8px;
+    color: #b45309; margin-bottom: 2px;
+  }
+
+  .now-playing-court b { font-weight: 700; color: #92400e; }
+  .now-playing-court .vs { font-size: 0.65rem; color: #d97706; }
+
+  .timer-input-row {
+    display: flex; align-items: center;
+    justify-content: center; gap: 6px; margin-bottom: 12px;
+  }
+
+  .timer-input-row input {
+    width: 54px; padding: 8px 4px; border: 1.5px solid #ccc;
+    border-radius: 6px; font-size: 1.1rem; text-align: center; font-weight: 700;
+  }
+
+  .timer-input-row input:focus { outline: none; border-color: #1a1a1a; }
+  .timer-input-row .colon { font-size: 1.4rem; font-weight: 800; }
+
+  .timer-display {
+    font-size: clamp(3rem, 11vw, 4.5rem); font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 2px; margin: 8px 0 14px; line-height: 1;
+  }
+
+  .timer-display.warning { color: #ef4444; }
+
+  .timer-btns {
+    display: flex; justify-content: center; gap: 8px;
+  }
+
+  .timer-btns .btn { min-width: 80px; }
+
+  .next-round-row {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; margin-top: 14px;
+    font-size: 0.85rem; color: #555;
+  }
+
+  .next-round-row label { font-weight: 600; }
+
+  .next-round-row select {
+    padding: 5px 8px; border: 1.5px solid #ccc;
+    border-radius: 6px; font-size: 0.9rem; font-weight: 600;
+  }
+
+  .tournament-done {
+    font-size: 1.3rem; font-weight: 800;
+    color: #16a34a; margin: 8px 0;
+  }
+
+  /* --- Score Panel --- */
+  .score-panel {
+    background: #fff; border: 2px solid #d97706; border-radius: 10px;
+    padding: clamp(14px, 3.5vw, 18px) clamp(10px, 2.5vw, 16px); margin-top: 16px; text-align: left;
+  }
+
+  .score-panel h3 {
+    font-size: 1rem; font-weight: 800; color: #92400e;
+    margin-bottom: 14px; text-align: center;
+  }
+
+  .score-court-block {
+    margin-bottom: 14px; padding: 12px; background: #fef9ee;
+    border-radius: 8px; border: 1.5px solid #f59e0b;
+  }
+
+  .score-court-label {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.8px; color: #b45309; margin-bottom: 8px;
+  }
+
+  .score-team-row {
+    display: flex; align-items: center; gap: 8px;
+    justify-content: space-between; margin-bottom: 6px;
+  }
+
+  .score-team-names {
+    font-weight: 700; font-size: clamp(0.82rem, 2.1vw, 0.88rem); flex: 1;
+  }
+
+  .score-input {
+    width: 54px; padding: 8px 6px; border: 1.5px solid #ccc;
+    border-radius: 6px; font-size: clamp(1rem, 2.5vw, 1.1rem); text-align: center; font-weight: 700;
+  }
+
+  .score-input:focus { outline: none; border-color: #d97706; }
+
+  .score-vs-label {
+    text-align: center; font-size: 0.75rem; font-weight: 700;
+    color: #888; letter-spacing: 1px; margin: 4px 0;
+  }
+
+  .score-error {
+    font-size: 0.78rem; color: #ef4444; font-weight: 600;
+    margin-top: 6px; display: none;
+  }
+
+  .score-panel-btns {
+    display: flex; gap: 8px; margin-top: 14px; justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  /* --- Bonus Panel --- */
+  .bonus-panel {
+    background: #fff; border: 2px solid #2d3e50; border-radius: 10px;
+    padding: clamp(14px, 3.5vw, 18px) clamp(10px, 2.5vw, 16px); margin: 16px 0; text-align: left;
+  }
+
+  .bonus-panel h3 {
+    font-size: 1rem; font-weight: 800; color: #2d3e50;
+    margin-bottom: 14px; text-align: center;
+  }
+
+  .bonus-courts-toggle {
+    display: flex; gap: 0; margin-bottom: 14px;
+    border: 2px solid #2d3e50; border-radius: 6px;
+    overflow: hidden; width: 100%;
+  }
+
+  .bonus-courts-toggle button {
+    flex: 1; padding: clamp(7px, 1.7vw, 9px) clamp(8px, 4.4vw, 18px); font-size: clamp(0.82rem, 2vw, 0.85rem); font-weight: 600;
+    border: none; background: #fff; cursor: pointer;
+    color: #2d3e50; transition: all 0.15s;
+  }
+
+  .bonus-courts-toggle button.active { background: #2d3e50; color: #fff; }
+
+  .bonus-court-block {
+    margin-bottom: 14px; padding: 12px; background: #f0f4f8;
+    border-radius: 8px; border: 1.5px solid #2d3e50;
+  }
+
+  .bonus-court-header {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+  }
+
+  .bonus-court-label-text {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.8px; color: #2d3e50;
+  }
+
+  .bonus-court-name-input {
+    width: 80px; padding: 4px 8px; border: 1.5px solid #ccc;
+    border-radius: 5px; font-size: 0.88rem; font-weight: 600; text-align: center;
+  }
+
+  .bonus-team-row {
+    display: flex; align-items: center; gap: 6px; margin-bottom: 6px; flex-wrap: wrap;
+  }
+
+  .bonus-team-label {
+    font-size: 0.75rem; font-weight: 700; color: #555; width: 48px; flex-shrink: 0;
+  }
+
+  .bonus-select {
+    padding: 6px 6px; border: 1.5px solid #ccc; border-radius: 5px;
+    font-size: clamp(0.82rem, 2.1vw, 0.85rem); font-weight: 600; flex: 1; min-width: 80px;
+  }
+
+  .bonus-vs-label {
+    text-align: center; font-size: 0.75rem; font-weight: 700;
+    color: #888; letter-spacing: 1px; margin: 4px 0;
+  }
+
+  .bonus-error {
+    font-size: 0.78rem; color: #ef4444; font-weight: 600;
+    margin-top: 8px; display: none;
+  }
+
+  .bonus-panel-btns {
+    display: flex; gap: 8px; margin-top: 14px; justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  /* --- Scoreboard view --- */
+  #scoreboard { display: none; }
+  #scoreboard.active { display: block; }
+
+  .scoreboard-wrap {
+    max-width: 680px; margin: 0 auto; background: #fff;
+    padding: clamp(16px, 4vw, 32px) clamp(10px, 2.5vw, 36px); border-radius: 10px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+  }
+
+  .scoreboard-wrap h2 {
+    text-align: center; font-size: 1.5rem; margin-bottom: 4px;
+  }
+
+  .scoreboard-wrap .sub {
+    text-align: center; font-size: 0.85rem; color: #666; margin-bottom: 20px;
+  }
+
+  .scoreboard-table {
+    width: 100%; border-collapse: collapse; font-size: clamp(0.82rem, 2.4vw, 1rem);
+  }
+
+  .scoreboard-table th, .scoreboard-table td {
+    border: 1.5px solid #2d3e50; padding: clamp(6px, 1.5vw, 8px) clamp(5px, 1.3vw, 12px); text-align: center;
+  }
+
+  .scoreboard-table thead th {
+    background: #2d3e50; color: #fff; font-weight: 700; font-size: 0.92rem;
+  }
+
+  .scoreboard-table thead th:nth-child(2) { text-align: left; }
+  .scoreboard-table tbody td:nth-child(2) { text-align: left; font-weight: 600; }
+
+  .scoreboard-table tbody tr:nth-child(even) td { background: #f5f8fc; }
+
+  .scoreboard-rank { font-weight: 800; color: #2d3e50; }
+
+  .diff-pos { color: #16a34a; font-weight: 700; }
+  .diff-neg { color: #ef4444; font-weight: 700; }
+
+  .scoreboard-back-row {
+    text-align: center; margin-top: 20px;
+    display: flex; justify-content: center; gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  /* --- Tournament done CTA --- */
+  .tournament-cta {
+    display: flex; gap: 8px; justify-content: center;
+    flex-wrap: wrap; margin-top: 10px;
+  }
+
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div class="setup no-print" id="setup">
+  <h1>Pickleball Round Robin</h1>
+
+  <label>Matchmaking</label>
+  <div class="mode-toggle" id="modeToggle">
+    <button class="active" data-mode="random" onclick="setMode('random')">Fully Random</button>
+    <button data-mode="balanced" onclick="setMode('balanced')">Skill Balanced</button>
+  </div>
+  <div class="mode-hint" id="modeHint">All matchups are completely random.</div>
+
+  <label>Players</label>
+  <div class="player-list" id="playerList"></div>
+  <div class="skill-legend" id="skillLegend" style="display:none;">
+    <span><span class="legend-dot green"></span> Advanced</span>
+    <span><span class="legend-dot blue"></span> Upper Int.</span>
+    <span><span class="legend-dot orange"></span> Intermediate</span>
+    <span><span class="legend-dot red"></span> Beginner</span>
+    <span style="color:#aaa;">Click to cycle</span>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="generate()">Generate Schedule</button>
+  </div>
+
+  <div class="last-updated">Last updated: 2026-05-21</div>
+</div>
+
+<!-- PRINTABLE -->
+<div id="printable">
+  <div class="print-wrap" id="schedule"></div>
+  <div class="back-btn-row no-print">
+    <button class="btn" onclick="goBack()">Back</button>
+    <button class="btn" onclick="generate()">Randomize</button>
+    <button class="btn btn-primary" onclick="window.print()">Print</button>
+    <button class="btn" onclick="showScoreboard()">Scoreboard</button>
+    <button class="btn" onclick="openBonusPanel()">Add Bonus Round</button>
+  </div>
+
+  <!-- Bonus Round Panel -->
+  <div class="bonus-panel no-print" id="bonusPanel" style="display:none;">
+    <h3>Add Bonus Round</h3>
+    <div style="margin-bottom:10px;">
+      <div class="bonus-courts-toggle" id="bonusCourtsToggle">
+        <button class="active" data-courts="1" onclick="setBonusCourts(1)">1 Court</button>
+        <button data-courts="2" onclick="setBonusCourts(2)">Both Courts</button>
+      </div>
+    </div>
+    <div id="bonusCourtBlocks"></div>
+    <div class="bonus-error" id="bonusError"></div>
+    <div class="bonus-panel-btns">
+      <button class="btn btn-success" onclick="confirmBonus()">Confirm / Add to Schedule</button>
+      <button class="btn" onclick="closeBonusPanel()">Cancel</button>
+    </div>
+  </div>
+
+  <div class="timer-section no-print" id="timerSection">
+    <div class="timer-round-indicator" id="roundIndicator">Round 1 of 7</div>
+    <div class="timer-progress" id="roundProgress"></div>
+    <div class="now-playing" id="nowPlaying"></div>
+
+    <div class="timer-input-row" id="timerInputRow">
+      <input id="timerMin" type="number" min="0" max="99" value="15" placeholder="MM">
+      <span class="colon">:</span>
+      <input id="timerSec" type="number" min="0" max="59" value="00" placeholder="SS">
+    </div>
+    <div class="timer-display" id="timerDisplay">8:00</div>
+    <div class="timer-btns">
+      <button class="btn btn-start" id="timerStartBtn" onclick="timerStart()">Start Round</button>
+      <button class="btn" id="timerResetBtn" onclick="timerReset()">Reset</button>
+      <button class="btn btn-end" id="timerEndBtn" onclick="timerEndRound()">End Round</button>
+    </div>
+    <div class="next-round-row">
+      <label>Next round:</label>
+      <select id="nextRoundSelect"></select>
+    </div>
+
+    <!-- Score Entry Panel (hidden by default) -->
+    <div class="score-panel no-print" id="scorePanel" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- SCOREBOARD VIEW -->
+<div id="scoreboard">
+  <div class="scoreboard-wrap">
+    <h2>Scoreboard</h2>
+    <div class="sub" id="scoreboardSub">Final standings</div>
+    <table class="scoreboard-table" id="scoreboardTable">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Player</th>
+          <th>W</th>
+          <th>L</th>
+          <th>PF</th>
+          <th>PA</th>
+          <th>+/- Diff</th>
+        </tr>
+      </thead>
+      <tbody id="scoreboardBody"></tbody>
+    </table>
+    <div class="scoreboard-back-row no-print">
+      <button class="btn" onclick="backToSchedule()">Back to Schedule</button>
+      <button class="btn btn-primary" onclick="window.print()">Print</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let mode = 'random';
+let currentRound = 0; // 0-indexed
+let totalRounds = 7;
+let roundsData = [];   // stored after generate
+let courtsData = [];
+let scoresData = [];   // parallel to roundsData: scoresData[r][c] = { team1, team2 } | null entries
+let playersData = [];  // snapshot of player names at generate time
+
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('#modeToggle button').forEach(b => {
+    b.classList.toggle('active', b.dataset.mode === m);
+  });
+  document.getElementById('modeHint').textContent =
+    m === 'random'
+      ? 'All matchups are completely random.'
+      : 'Same-color pairs only face same-color. Mixed teams balanced by skill.';
+  document.getElementById('skillLegend').style.display = m === 'balanced' ? 'flex' : 'none';
+  document.querySelectorAll('.skill-btn').forEach(b => {
+    b.classList.toggle('hidden', m === 'random');
+  });
+  saveSetup();
+}
+
+function toggleSkill(btn) {
+  const cycle = ['green', 'blue', 'orange', 'red'];
+  const cur = btn.dataset.skill;
+  const next = cycle[(cycle.indexOf(cur) + 1) % cycle.length];
+  btn.dataset.skill = next;
+  saveSetup();
+}
+
+// Build player rows
+(function initPlayers() {
+  const list = document.getElementById('playerList');
+  for (let i = 1; i <= 8; i++) {
+    const row = document.createElement('div');
+    row.className = 'player-row';
+    row.innerHTML = `
+      <input id="p${i}" placeholder="Player ${i}">
+      <button type="button" class="skill-btn hidden" id="sk${i}" data-skill="green" onclick="toggleSkill(this)"></button>
+    `;
+    list.appendChild(row);
+  }
+})();
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function getPlayers() {
+  return Array.from({ length: 8 }, (_, i) =>
+    document.getElementById(`p${i + 1}`).value.trim() || `Player ${i + 1}`
+  );
+}
+
+function getSkills() {
+  return Array.from({ length: 8 }, (_, i) =>
+    document.getElementById(`sk${i + 1}`).dataset.skill
+  );
+}
+
+function getCourts() {
+  return ['A', 'B'];
+}
+
+function goBack() {
+  document.getElementById('setup').style.display = '';
+  document.getElementById('printable').classList.remove('active');
+  document.getElementById('scoreboard').classList.remove('active');
+}
+
+function emptyScores(rounds) {
+  return rounds.map(round => round.map(() => ({ team1: null, team2: null })));
+}
+
+function generate() {
+  const players = getPlayers();
+  const courts = getCourts();
+  const skills = getSkills();
+  courtsData = courts;
+  playersData = players;
+  roundsData = buildSchedule(players, skills);
+  scoresData = emptyScores(roundsData);
+  totalRounds = 7;
+  currentRound = 0;
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('printable').classList.add('active');
+  document.getElementById('scoreboard').classList.remove('active');
+  render(roundsData, players, courts);
+  buildNextRoundSelect();
+  updateRoundState();
+  timerReset();
+  saveSession();
+}
+
+// Skill points: green=4, blue=3, orange=2, red=1
+function skillPts(s) {
+  return s === 'green' ? 4 : s === 'blue' ? 3 : s === 'orange' ? 2 : 1;
+}
+
+function isSameColor(team, skills) {
+  return skills[team[0]] === skills[team[1]];
+}
+
+function isUnfair(team1, team2, skills) {
+  const t1Same = isSameColor(team1, skills);
+  const t2Same = isSameColor(team2, skills);
+
+  const t1Green = t1Same && skills[team1[0]] === 'green';
+  const t2Green = t2Same && skills[team2[0]] === 'green';
+
+  // Green-pair rule: G/G can ONLY face G/G
+  if (t1Green || t2Green) {
+    return !(t1Green && t2Green);
+  }
+
+  // Non-green teams: check strength gap (max 2 points)
+  const p1a = skillPts(skills[team1[0]]), p1b = skillPts(skills[team1[1]]);
+  const p2a = skillPts(skills[team2[0]]), p2b = skillPts(skills[team2[1]]);
+  if (Math.abs((p1a + p1b) - (p2a + p2b)) > 2) return true;
+
+  // Weakest-player rule: the two teams' weaker players must be within 1 tier.
+  const weak1 = Math.min(p1a, p1b);
+  const weak2 = Math.min(p2a, p2b);
+  if (Math.abs(weak1 - weak2) > 1) return true;
+
+  return false;
+}
+
+function matchupKey(team1, team2) {
+  const t1 = [Math.min(team1[0], team1[1]), Math.max(team1[0], team1[1])];
+  const t2 = [Math.min(team2[0], team2[1]), Math.max(team2[0], team2[1])];
+  if (t1[0] < t2[0] || (t1[0] === t2[0] && t1[1] < t2[1])) {
+    return t1.join(',') + '-' + t2.join(',');
+  }
+  return t2.join(',') + '-' + t1.join(',');
+}
+
+function isAllGreen(team1, team2, skills) {
+  return skills[team1[0]] === 'green' && skills[team1[1]] === 'green'
+      && skills[team2[0]] === 'green' && skills[team2[1]] === 'green';
+}
+
+function courtStrength(court, skills) {
+  return skillPts(skills[court.team1[0]]) + skillPts(skills[court.team1[1]])
+       + skillPts(skills[court.team2[0]]) + skillPts(skills[court.team2[1]]);
+}
+
+// Section 1: teamGap helper for spread-based round ordering
+function teamGap(team, skills) {
+  return Math.abs(skillPts(skills[team[0]]) - skillPts(skills[team[1]]));
+}
+
+function buildSchedule(players, skills) {
+  const n = 8;
+  const balanced = mode === 'balanced';
+  const partnerCount = Array.from({ length: n }, () => new Array(n).fill(0));
+  const opponentCount = Array.from({ length: n }, () => new Array(n).fill(0));
+  const usedGreenMatchups = new Set();
+  const rounds = [];
+
+  for (let r = 0; r < 7; r++) {
+    let bestRound = null;
+    let bestScore = Infinity;
+
+    for (let attempt = 0; attempt < 1500; attempt++) {
+      const order = shuffle([0, 1, 2, 3, 4, 5, 6, 7]);
+      const cm = [
+        { team1: [order[0], order[1]], team2: [order[2], order[3]] },
+        { team1: [order[4], order[5]], team2: [order[6], order[7]] },
+      ];
+
+      if (balanced) {
+        if (isUnfair(cm[0].team1, cm[0].team2, skills)) continue;
+        if (isUnfair(cm[1].team1, cm[1].team2, skills)) continue;
+      }
+
+      let score = 0;
+
+      for (const c of cm) {
+        const a = c.team1[0], b = c.team1[1], x = c.team2[0], y = c.team2[1];
+        score += partnerCount[a][b] * 10 + partnerCount[x][y] * 10;
+        score += opponentCount[a][x] + opponentCount[a][y];
+        score += opponentCount[b][x] + opponentCount[b][y];
+      }
+
+      if (balanced) {
+        for (const c of cm) {
+          const ag = isAllGreen(c.team1, c.team2, skills);
+          if (ag) {
+            const key = matchupKey(c.team1, c.team2);
+            if (usedGreenMatchups.has(key)) {
+              score += 1000;
+            } else {
+              score -= 100;
+            }
+          }
+        }
+      }
+
+      if (score < bestScore) { bestScore = score; bestRound = cm; }
+    }
+
+    if (!bestRound) {
+      // Tier 2: try more attempts with only the G/G constraint
+      for (let fb = 0; fb < 1500; fb++) {
+        const order = shuffle([0, 1, 2, 3, 4, 5, 6, 7]);
+        const cm = [
+          { team1: [order[0], order[1]], team2: [order[2], order[3]] },
+          { team1: [order[4], order[5]], team2: [order[6], order[7]] },
+        ];
+        let ggOk = true;
+        for (const c of cm) {
+          const g1 = isSameColor(c.team1, skills) && skills[c.team1[0]] === 'green';
+          const g2 = isSameColor(c.team2, skills) && skills[c.team2[0]] === 'green';
+          if ((g1 || g2) && !(g1 && g2)) { ggOk = false; break; }
+        }
+        if (!ggOk) continue;
+        bestRound = cm;
+        break;
+      }
+    }
+    // Tier 3: force-partition greens if exactly 4
+    if (!bestRound) {
+      const greenIdxs = [0,1,2,3,4,5,6,7].filter(i => skills[i] === 'green');
+      const nonGreen = [0,1,2,3,4,5,6,7].filter(i => skills[i] !== 'green');
+      if (greenIdxs.length === 4) {
+        const gs = shuffle(greenIdxs);
+        const ng = shuffle(nonGreen);
+        bestRound = [
+          { team1: [gs[0], gs[1]], team2: [gs[2], gs[3]] },
+          { team1: [ng[0], ng[1]], team2: [ng[2], ng[3]] },
+        ];
+      } else {
+        // No green partition possible — random fallback
+        const order = shuffle([0, 1, 2, 3, 4, 5, 6, 7]);
+        bestRound = [
+          { team1: [order[0], order[1]], team2: [order[2], order[3]] },
+          { team1: [order[4], order[5]], team2: [order[6], order[7]] },
+        ];
+      }
+    }
+
+    if (balanced) {
+      for (const c of bestRound) {
+        if (isAllGreen(c.team1, c.team2, skills)) {
+          usedGreenMatchups.add(matchupKey(c.team1, c.team2));
+        }
+      }
+    }
+
+    for (const c of bestRound) {
+      const [a, b] = c.team1, [x, y] = c.team2;
+      partnerCount[a][b]++; partnerCount[b][a]++;
+      partnerCount[x][y]++; partnerCount[y][x]++;
+      opponentCount[a][x]++; opponentCount[x][a]++;
+      opponentCount[a][y]++; opponentCount[y][a]++;
+      opponentCount[b][x]++; opponentCount[x][b]++;
+      opponentCount[b][y]++; opponentCount[y][b]++;
+    }
+
+    // NOTE: Court priority swap is REMOVED from here; applied after sorting below.
+    rounds.push(bestRound);
+  }
+
+  // Section 1: Sort rounds by descending spread (balanced mode only)
+  if (balanced) {
+    // Attach original index for stable tiebreak
+    const indexed = rounds.map((round, origIdx) => {
+      const spread = round.reduce((sum, c) => {
+        return sum + teamGap(c.team1, skills) + teamGap(c.team2, skills);
+      }, 0);
+      return { round, spread, origIdx };
+    });
+
+    // Stable descending sort: higher spread first; ties keep generation order
+    indexed.sort((a, b) => {
+      if (b.spread !== a.spread) return b.spread - a.spread;
+      return a.origIdx - b.origIdx;
+    });
+
+    // Rebuild rounds array in sorted order
+    rounds.length = 0;
+    for (const item of indexed) {
+      rounds.push(item.round);
+    }
+
+  }
+
+  // Always put weaker matchup on Court A (index 0), stronger on Court B (index 1)
+  for (let fi = 0; fi < rounds.length; fi++) {
+    const str0 = courtStrength(rounds[fi][0], skills);
+    const str1 = courtStrength(rounds[fi][1], skills);
+    if (str0 > str1) rounds[fi] = [rounds[fi][1], rounds[fi][0]];
+  }
+
+  // Map indices to player names (final step, after sort)
+  return rounds.map(round => round.map(c => ({
+    team1: c.team1.map(i => players[i]),
+    team2: c.team2.map(i => players[i]),
+  })));
+}
+
+// Section 2: Generalized render() with variable court counts + score display
+function roundLabel(i) {
+  return i < 7 ? `Round ${i + 1}` : `Bonus ${i - 6}`;
+}
+
+function render(rounds, players, courts) {
+  const cell = (m) =>
+    `<b>${m.team1[0]}</b> &amp; <b>${m.team1[1]}</b><br>` +
+    `<span class="vs">vs</span><br>` +
+    `<b>${m.team2[0]}</b> &amp; <b>${m.team2[1]}</b>`;
+
+  // Build header: always show 2 court columns (Court 0 and Court 1 labels)
+  const hdr0 = courts[0] ? `Court ${courts[0]}` : 'Court 1';
+  const hdr1 = courts[1] ? `Court ${courts[1]}` : 'Court 2';
+
+  let html = `
+    <div class="print-header">
+      <h1>Pickleball Round Robin</h1>
+      <div class="sub">Courts ${courts[0]} &amp; ${courts[1]}</div>
+    </div>
+    <table class="schedule">
+      <thead>
+        <tr>
+          <th></th>
+          <th>${hdr0}</th>
+          <th>${hdr1}</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+  rounds.forEach((round, i) => {
+    const label = roundLabel(i);
+    const m0 = round[0] || null;
+    const m1 = round[1] || null;
+
+    // Score display helper
+    const scoreHtml = (r, c) => {
+      if (scoresData[r] && scoresData[r][c] && scoresData[r][c].team1 !== null) {
+        const s = scoresData[r][c];
+        return `<div class="court-score" id="score-r${r}-c${c}">${s.team1}&ndash;${s.team2}</div>`;
+      }
+      return `<div class="court-score" id="score-r${r}-c${c}"></div>`;
+    };
+
+    const cell0 = m0
+      ? `<td class="court-cell">${cell(m0)}${scoreHtml(i, 0)}</td>`
+      : `<td class="court-cell">&mdash;</td>`;
+    const cell1 = m1
+      ? `<td class="court-cell">${cell(m1)}${scoreHtml(i, 1)}</td>`
+      : `<td class="court-cell">&mdash;</td>`;
+
+    html += `
+        <tr id="round-row-${i}">
+          <td class="round-label">${label}</td>
+          ${cell0}
+          ${cell1}
+        </tr>`;
+  });
+
+  html += `
+      </tbody>
+    </table>`;
+
+  document.getElementById('schedule').innerHTML = html;
+}
+
+// --- Round state management ---
+
+function buildNextRoundSelect() {
+  const sel = document.getElementById('nextRoundSelect');
+  sel.innerHTML = '';
+  for (let i = 0; i < totalRounds; i++) {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = i < 7 ? `Round ${i + 1}` : `Bonus ${i - 6}`;
+    sel.appendChild(opt);
+  }
+  updateNextRoundSelect();
+}
+
+function updateNextRoundSelect() {
+  const sel = document.getElementById('nextRoundSelect');
+  const next = currentRound + 1;
+  if (next < totalRounds) {
+    sel.value = next;
+  }
+}
+
+function updateRoundState(autoScroll = true) {
+  const isDone = currentRound >= totalRounds;
+  const indicator = document.getElementById('roundIndicator');
+  const progress = document.getElementById('roundProgress');
+  const nowPlaying = document.getElementById('nowPlaying');
+
+  if (isDone) {
+    indicator.innerHTML = '<span class="tournament-done">Tournament Complete!</span>';
+    progress.textContent = `All ${totalRounds} rounds played.`;
+    // Section 4 & 5: Surface Scoreboard + Add Bonus Round CTAs on completion
+    nowPlaying.innerHTML = `
+      <div class="tournament-cta">
+        <button class="btn btn-primary" onclick="showScoreboard()">View Scoreboard</button>
+        <button class="btn" onclick="openBonusPanel()">Add Bonus Round</button>
+      </div>`;
+  } else {
+    indicator.textContent = `${roundLabel(currentRound)} of ${totalRounds}`;
+    const done = currentRound;
+    const remaining = totalRounds - currentRound - 1;
+    progress.textContent = done > 0 ? `${done} played, ${remaining} remaining after this round` : '';
+
+    // Show current matchup near timer
+    const cm = roundsData[currentRound];
+    const courts = courtsData;
+    nowPlaying.innerHTML = cm.map((m, ci) => `
+      <div class="now-playing-court">
+        <div class="npc-label">Court ${courts[ci] || (ci + 1)}</div>
+        <b>${m.team1[0]}</b> &amp; <b>${m.team1[1]}</b><br>
+        <span class="vs">vs</span><br>
+        <b>${m.team2[0]}</b> &amp; <b>${m.team2[1]}</b>
+      </div>
+    `).join('');
+  }
+
+  // Update row classes
+  for (let i = 0; i < totalRounds; i++) {
+    const row = document.getElementById(`round-row-${i}`);
+    if (!row) continue;
+    row.classList.remove('round-done', 'round-active', 'round-upcoming');
+    if (i < currentRound) {
+      row.classList.add('round-done');
+    } else if (i === currentRound && !isDone) {
+      row.classList.add('round-active');
+    } else if (i > currentRound || isDone) {
+      row.classList.add(isDone ? '' : 'round-upcoming');
+    }
+  }
+
+  // Auto-scroll active row into view
+  if (!isDone && autoScroll) {
+    const activeRow = document.getElementById(`round-row-${currentRound}`);
+    if (activeRow) {
+      activeRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+
+  updateNextRoundSelect();
+  saveSession();
+}
+
+// --- Timer ---
+let timerInterval = null;
+let timerRemaining = 0;
+let timerRunning = false;
+let timerDeadline = null;       // wall-clock ms when the round ends; survives JS suspension
+function getTimerInputSeconds() {
+  const m = parseInt(document.getElementById('timerMin').value) || 0;
+  const s = parseInt(document.getElementById('timerSec').value) || 0;
+  return m * 60 + s;
+}
+
+function formatTime(totalSec) {
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return m + ':' + String(s).padStart(2, '0');
+}
+
+function updateTimerDisplay() {
+  const el = document.getElementById('timerDisplay');
+  el.textContent = formatTime(timerRemaining);
+  el.classList.toggle('warning', timerRemaining <= 30 && timerRemaining > 0);
+  if (timerRemaining <= 0 && timerRunning) {
+    el.classList.add('warning');
+  }
+}
+
+document.getElementById('timerMin').addEventListener('input', function() {
+  if (!timerRunning) {
+    timerRemaining = getTimerInputSeconds();
+    updateTimerDisplay();
+  }
+});
+document.getElementById('timerSec').addEventListener('input', function() {
+  if (!timerRunning) {
+    timerRemaining = getTimerInputSeconds();
+    updateTimerDisplay();
+  }
+});
+
+function timerStart() {
+  const btn = document.getElementById('timerStartBtn');
+
+  if (timerRunning) {
+    clearInterval(timerInterval);
+    timerRemaining = Math.max(0, Math.round((timerDeadline - Date.now()) / 1000));
+    timerDeadline = null;
+    timerRunning = false;
+    btn.textContent = 'Resume';
+    releaseWakeLock();
+    if (window.AndroidAlarm) AndroidAlarm.cancel();
+    return;
+  }
+
+  if (currentRound >= totalRounds) return;
+
+  if (timerRemaining <= 0) {
+    timerRemaining = getTimerInputSeconds();
+  }
+  if (timerRemaining <= 0) return;
+
+  timerRunning = true;
+  btn.textContent = 'Pause';
+  document.getElementById('timerInputRow').style.display = 'none';
+  enableWakeLock();
+
+  timerDeadline = Date.now() + timerRemaining * 1000;
+  if (window.AndroidAlarm) {
+    AndroidAlarm.start(timerRemaining);
+  } else {
+    startSystemBackupTimer(timerRemaining);
+  }
+
+  timerInterval = setInterval(timerTick, 250);
+}
+
+// Recomputes remaining time from the wall-clock deadline, so the countdown
+// stays correct even if the browser suspended timers (screen off, tab hidden).
+function timerTick() {
+  if (!timerRunning) return;
+  timerRemaining = Math.max(0, Math.round((timerDeadline - Date.now()) / 1000));
+  updateTimerDisplay();
+  if (timerRemaining <= 0) {
+    clearInterval(timerInterval);
+    timerRunning = false;
+    timerDeadline = null;
+    document.getElementById('timerStartBtn').textContent = 'Start Round';
+    releaseWakeLock();
+    playAlarm();
+  }
+}
+
+// Backup alarm: hands a parallel countdown to Android's Clock app via the
+// public ACTION_SET_TIMER intent, so a real OS alarm rings at round end even
+// if the phone locks or the browser is suspended. No-op off Android; if the
+// round ends early, the leftover Clock timer must be dismissed by hand.
+function startSystemBackupTimer(seconds) {
+  if (window.AndroidAlarm) return;
+  if (!/android/i.test(navigator.userAgent)) return;
+  window.location.href = 'intent:#Intent;action=android.intent.action.SET_TIMER;' +
+    'i.android.intent.extra.alarm.LENGTH=' + seconds + ';' +
+    'S.android.intent.extra.alarm.MESSAGE=' + encodeURIComponent('Pickleball round over') + ';' +
+    'B.android.intent.extra.alarm.SKIP_UI=true;end';
+}
+
+function timerReset() {
+  clearInterval(timerInterval);
+  timerRunning = false;
+  timerDeadline = null;
+  if (window.AndroidAlarm) AndroidAlarm.cancel();
+  stopAlarm();
+  releaseWakeLock();
+  timerRemaining = getTimerInputSeconds();
+  updateTimerDisplay();
+  document.getElementById('timerStartBtn').textContent = 'Start Round';
+  document.getElementById('timerInputRow').style.display = 'flex';
+  document.getElementById('timerDisplay').classList.remove('warning');
+}
+
+// Section 3: Score entry panel — rewrite timerEndRound()
+function timerEndRound() {
+  // If already at/past end, nothing to do
+  if (currentRound >= totalRounds) return;
+
+  timerReset();
+
+  // Build and open the score panel
+  openScorePanel(currentRound);
+}
+
+function openScorePanel(roundIdx) {
+  const panel = document.getElementById('scorePanel');
+  const round = roundsData[roundIdx];
+  if (!round) return;
+
+  const label = roundLabel(roundIdx);
+
+  let html = `<h3>Enter scores &mdash; ${label}</h3>`;
+
+  round.forEach((m, c) => {
+    const existing = (scoresData[roundIdx] && scoresData[roundIdx][c]) || { team1: null, team2: null };
+    const val1 = existing.team1 !== null ? existing.team1 : '';
+    const val2 = existing.team2 !== null ? existing.team2 : '';
+    const courtLabel = courtsData[c] || (c + 1);
+    html += `
+      <div class="score-court-block">
+        <div class="score-court-label">Court ${courtLabel}</div>
+        <div class="score-team-row">
+          <span class="score-team-names"><b>${m.team1[0]}</b> &amp; <b>${m.team1[1]}</b></span>
+          <input class="score-input" id="score-input-${roundIdx}-${c}-team1" type="number" min="0" inputmode="numeric" placeholder="0" value="${val1}">
+        </div>
+        <div class="score-vs-label">vs</div>
+        <div class="score-team-row">
+          <span class="score-team-names"><b>${m.team2[0]}</b> &amp; <b>${m.team2[1]}</b></span>
+          <input class="score-input" id="score-input-${roundIdx}-${c}-team2" type="number" min="0" inputmode="numeric" placeholder="0" value="${val2}">
+        </div>
+        <div class="score-error" id="score-err-${roundIdx}-${c}"></div>
+      </div>`;
+  });
+
+  html += `
+    <div class="score-panel-btns">
+      <button class="btn btn-success" onclick="scoreSaveAndContinue(${roundIdx})">Save &amp; Continue</button>
+      <button class="btn" onclick="scoreSkip(${roundIdx})">Skip</button>
+      <button class="btn btn-danger" onclick="scoreCancel()">Cancel</button>
+    </div>`;
+
+  panel.innerHTML = html;
+  panel.style.display = 'block';
+  // Score entry lives at the bottom of the page — scroll down so all inputs are in view.
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function closeScorePanel() {
+  const panel = document.getElementById('scorePanel');
+  panel.style.display = 'none';
+  panel.innerHTML = '';
+}
+
+// After advancing a round, land on the timer controls (bottom) so the next round
+// can be started immediately — rather than scrolling up to the schedule table.
+function scrollToTimer() {
+  const ts = document.getElementById('timerSection');
+  if (ts) ts.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function scoreSaveAndContinue(roundIdx) {
+  const round = roundsData[roundIdx];
+  if (!round) return;
+
+  let valid = true;
+
+  // Validate all courts
+  for (let c = 0; c < round.length; c++) {
+    const t1El = document.getElementById(`score-input-${roundIdx}-${c}-team1`);
+    const t2El = document.getElementById(`score-input-${roundIdx}-${c}-team2`);
+    const errEl = document.getElementById(`score-err-${roundIdx}-${c}`);
+    errEl.style.display = 'none';
+    errEl.textContent = '';
+
+    const t1Raw = t1El.value.trim();
+    const t2Raw = t2El.value.trim();
+    const t1 = parseInt(t1Raw, 10);
+    const t2 = parseInt(t2Raw, 10);
+
+    if (t1Raw === '' || t2Raw === '' || isNaN(t1) || isNaN(t2) || t1 < 0 || t2 < 0) {
+      errEl.textContent = 'Please enter valid non-negative scores for both teams.';
+      errEl.style.display = 'block';
+      valid = false;
+      continue;
+    }
+
+    if (t1 === t2) {
+      errEl.textContent = "Scores can't be tied — enter the final score after the sudden-death point.";
+      errEl.style.display = 'block';
+      valid = false;
+    }
+  }
+
+  if (!valid) return;
+
+  // Store scores
+  for (let c = 0; c < round.length; c++) {
+    const t1 = parseInt(document.getElementById(`score-input-${roundIdx}-${c}-team1`).value, 10);
+    const t2 = parseInt(document.getElementById(`score-input-${roundIdx}-${c}-team2`).value, 10);
+    if (!scoresData[roundIdx]) scoresData[roundIdx] = [];
+    scoresData[roundIdx][c] = { team1: t1, team2: t2 };
+
+    // Refresh score display in the table
+    const scoreEl = document.getElementById(`score-r${roundIdx}-c${c}`);
+    if (scoreEl) {
+      scoreEl.innerHTML = `${t1}&ndash;${t2}`;
+    }
+  }
+
+  closeScorePanel();
+
+  // Advance round
+  const sel = document.getElementById('nextRoundSelect');
+  currentRound = parseInt(sel.value);
+  updateRoundState(false);
+  scrollToTimer();
+  saveSession();
+}
+
+function scoreSkip(roundIdx) {
+  closeScorePanel();
+  // Advance without storing scores
+  const sel = document.getElementById('nextRoundSelect');
+  currentRound = parseInt(sel.value);
+  updateRoundState(false);
+  scrollToTimer();
+  saveSession();
+}
+
+function scoreCancel() {
+  closeScorePanel();
+  // Do NOT advance round, do NOT save session
+}
+
+// Section 4: computeStandings() and Scoreboard view
+
+function computeStandings() {
+  const stats = {};
+  for (const name of playersData) {
+    stats[name] = { wins: 0, losses: 0, pf: 0, pa: 0, games: 0 };
+  }
+
+  for (let r = 0; r < roundsData.length; r++) {
+    const round = roundsData[r];
+    for (let c = 0; c < round.length; c++) {
+      const sc = scoresData[r] && scoresData[r][c];
+      if (!sc || sc.team1 === null || sc.team2 === null) continue;
+
+      const s1 = sc.team1;
+      const s2 = sc.team2;
+      const win1 = s1 > s2;
+      const m = round[c];
+
+      for (const name of m.team1) {
+        if (!stats[name]) stats[name] = { wins: 0, losses: 0, pf: 0, pa: 0, games: 0 };
+        stats[name].games++;
+        stats[name].pf += s1;
+        stats[name].pa += s2;
+        if (win1) stats[name].wins++; else stats[name].losses++;
+      }
+      for (const name of m.team2) {
+        if (!stats[name]) stats[name] = { wins: 0, losses: 0, pf: 0, pa: 0, games: 0 };
+        stats[name].games++;
+        stats[name].pf += s2;
+        stats[name].pa += s1;
+        if (!win1) stats[name].wins++; else stats[name].losses++;
+      }
+    }
+  }
+
+  return Object.entries(stats).map(([name, s]) => {
+    const avg = s.games ? (s.pf - s.pa) / s.games : 0;
+    return { name, ...s, avg };
+  }).sort((a, b) => {
+    if (b.wins !== a.wins) return b.wins - a.wins;
+    if (b.avg !== a.avg) return b.avg - a.avg;
+    return b.pf - a.pf;
+  });
+}
+
+function formatAvgDiff(avg) {
+  return (avg >= 0 ? '+' : '') + avg.toFixed(2);
+}
+
+function showScoreboard() {
+  const standings = computeStandings();
+  const tbody = document.getElementById('scoreboardBody');
+  const sub = document.getElementById('scoreboardSub');
+
+  // Count played games for subtitle
+  let playedRounds = 0;
+  for (let r = 0; r < roundsData.length; r++) {
+    for (let c = 0; c < (roundsData[r] || []).length; c++) {
+      const sc = scoresData[r] && scoresData[r][c];
+      if (sc && sc.team1 !== null) { playedRounds++; break; }
+    }
+  }
+  sub.textContent = `${playedRounds} round(s) scored`;
+
+  tbody.innerHTML = standings.map((row, i) => {
+    const diffClass = row.avg >= 0 ? 'diff-pos' : 'diff-neg';
+    return `<tr>
+      <td class="scoreboard-rank">${i + 1}</td>
+      <td>${row.name}</td>
+      <td>${row.wins}</td>
+      <td>${row.losses}</td>
+      <td>${row.pf}</td>
+      <td>${row.pa}</td>
+      <td class="${diffClass}">${formatAvgDiff(row.avg)}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('printable').classList.remove('active');
+  document.getElementById('scoreboard').classList.add('active');
+}
+
+function backToSchedule() {
+  document.getElementById('scoreboard').classList.remove('active');
+  document.getElementById('printable').classList.add('active');
+}
+
+// Section 5: Bonus Round Panel
+
+let bonusActiveCourts = 1;
+
+function openBonusPanel() {
+  bonusActiveCourts = 1;
+  // Reset toggle UI
+  document.querySelectorAll('#bonusCourtsToggle button').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.courts) === 1);
+  });
+  renderBonusCourtBlocks();
+  document.getElementById('bonusPanel').style.display = 'block';
+  document.getElementById('bonusPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function closeBonusPanel() {
+  document.getElementById('bonusPanel').style.display = 'none';
+  document.getElementById('bonusError').style.display = 'none';
+}
+
+function setBonusCourts(n) {
+  bonusActiveCourts = n;
+  document.querySelectorAll('#bonusCourtsToggle button').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.courts) === n);
+  });
+  renderBonusCourtBlocks();
+}
+
+function renderBonusCourtBlocks() {
+  const container = document.getElementById('bonusCourtBlocks');
+  let html = '';
+
+  for (let c = 0; c < bonusActiveCourts; c++) {
+    const defaultCourtName = courtsData[c] || (c + 1);
+    const playerOptions = playersData.map(name => `<option value="${name}">${name}</option>`).join('');
+
+    html += `
+      <div class="bonus-court-block" id="bonus-court-block-${c}">
+        <div class="bonus-court-header">
+          <span class="bonus-court-label-text">Court</span>
+          <input class="bonus-court-name-input" id="bonus-court-name-${c}" type="text" value="${defaultCourtName}">
+        </div>
+        <div class="bonus-team-row">
+          <span class="bonus-team-label">Team A:</span>
+          <select class="bonus-select" id="bonus-c${c}-a1">${playerOptions}</select>
+          <select class="bonus-select" id="bonus-c${c}-a2">${playerOptions}</select>
+        </div>
+        <div class="bonus-vs-label">vs</div>
+        <div class="bonus-team-row">
+          <span class="bonus-team-label">Team B:</span>
+          <select class="bonus-select" id="bonus-c${c}-b1">${playerOptions}</select>
+          <select class="bonus-select" id="bonus-c${c}-b2">${playerOptions}</select>
+        </div>
+        <div style="margin-top:8px;">
+          <button class="btn" onclick="randomizeBonus(${c})">Randomize</button>
+        </div>
+      </div>`;
+  }
+
+  container.innerHTML = html;
+
+  // Set default selections to avoid all-same
+  for (let c = 0; c < bonusActiveCourts; c++) {
+    const opts = playersData;
+    if (opts.length >= 4) {
+      document.getElementById(`bonus-c${c}-a1`).value = opts[0];
+      document.getElementById(`bonus-c${c}-a2`).value = opts[1];
+      document.getElementById(`bonus-c${c}-b1`).value = opts[2];
+      document.getElementById(`bonus-c${c}-b2`).value = opts[3];
+    }
+  }
+}
+
+function randomizeBonus(c) {
+  const shuffled = shuffle([...playersData]);
+  const ids = [`bonus-c${c}-a1`, `bonus-c${c}-a2`, `bonus-c${c}-b1`, `bonus-c${c}-b2`];
+  // Use first 4 shuffled players (or wrap if fewer than 4)
+  for (let i = 0; i < 4; i++) {
+    const el = document.getElementById(ids[i]);
+    if (el && shuffled[i]) el.value = shuffled[i];
+  }
+}
+
+function confirmBonus() {
+  const errEl = document.getElementById('bonusError');
+  errEl.style.display = 'none';
+  errEl.textContent = '';
+
+  const newRound = [];
+
+  // Collect and validate
+  for (let c = 0; c < bonusActiveCourts; c++) {
+    const a1 = document.getElementById(`bonus-c${c}-a1`).value;
+    const a2 = document.getElementById(`bonus-c${c}-a2`).value;
+    const b1 = document.getElementById(`bonus-c${c}-b1`).value;
+    const b2 = document.getElementById(`bonus-c${c}-b2`).value;
+    newRound.push({ team1: [a1, a2], team2: [b1, b2] });
+  }
+
+  // Validate distinct players per court
+  for (let c = 0; c < bonusActiveCourts; c++) {
+    const players = [newRound[c].team1[0], newRound[c].team1[1], newRound[c].team2[0], newRound[c].team2[1]];
+    const unique = new Set(players);
+    if (unique.size < 4) {
+      errEl.textContent = `Court ${c + 1}: all 4 players must be different.`;
+      errEl.style.display = 'block';
+      return;
+    }
+  }
+
+  // Validate 8 distinct across both courts (when 2 courts)
+  if (bonusActiveCourts === 2) {
+    const all = [
+      ...newRound[0].team1, ...newRound[0].team2,
+      ...newRound[1].team1, ...newRound[1].team2,
+    ];
+    const unique = new Set(all);
+    if (unique.size < 8) {
+      errEl.textContent = 'With both courts active, all 8 players across both courts must be different.';
+      errEl.style.display = 'block';
+      return;
+    }
+  }
+
+  // Update court labels if changed
+  for (let c = 0; c < bonusActiveCourts; c++) {
+    const nameEl = document.getElementById(`bonus-court-name-${c}`);
+    if (nameEl && nameEl.value) {
+      // We don't store per-round court labels; this is cosmetic.
+      // The bonus round will use courtsData[c] as displayed.
+      // Optionally update courtsData for this bonus if user changed it:
+      // (We'll store bonus court names in a separate temporary variable handled in render)
+    }
+  }
+
+  // Append to roundsData and scoresData
+  roundsData.push(newRound);
+  scoresData.push(newRound.map(() => ({ team1: null, team2: null })));
+  totalRounds++;
+
+  closeBonusPanel();
+
+  render(roundsData, playersData, courtsData);
+  buildNextRoundSelect();
+  currentRound = roundsData.length - 1;
+  updateRoundState();
+
+  // Scroll to new row
+  const newRow = document.getElementById(`round-row-${currentRound}`);
+  if (newRow) newRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  saveSession();
+}
+
+// Section 6: Session persistence
+
+const SESSION_KEY = 'pickleball-rr-session-v1';
+
+function saveSession() {
+  try {
+    const data = {
+      roundsData,
+      scoresData,
+      courtsData,
+      currentRound,
+      totalRounds,
+      playersData,
+    };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(data));
+  } catch {}
+}
+
+function loadSession() {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+// --- Loud alarm using Web Audio API ---
+let alarmCtx = null;
+let alarmRepeatId = null;
+
+function playAlarm() {
+  stopAlarm();
+  alarmCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  function beepCycle() {
+    if (!alarmCtx) return;
+    for (let i = 0; i < 3; i++) {
+      const osc = alarmCtx.createOscillator();
+      const gain = alarmCtx.createGain();
+      osc.connect(gain);
+      gain.connect(alarmCtx.destination);
+      osc.type = 'square';
+      osc.frequency.value = 1000;
+      gain.gain.value = 0.6;
+      const start = alarmCtx.currentTime + i * 0.35;
+      osc.start(start);
+      osc.stop(start + 0.2);
+    }
+  }
+
+  beepCycle();
+  alarmRepeatId = setInterval(beepCycle, 1500);
+}
+
+function stopAlarm() {
+  if (alarmRepeatId) { clearInterval(alarmRepeatId); alarmRepeatId = null; }
+  if (alarmCtx) { alarmCtx.close(); alarmCtx = null; }
+}
+
+// --- Wake Lock ---
+let wakeLock = null;
+let wantWakeLock = false;
+
+async function acquireWakeLock() {
+  if (!('wakeLock' in navigator)) return;
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', () => { wakeLock = null; });
+  } catch {}
+}
+
+function enableWakeLock() {
+  wantWakeLock = true;
+  acquireWakeLock();
+}
+
+function releaseWakeLock() {
+  wantWakeLock = false;
+  if (wakeLock) {
+    wakeLock.release().catch(() => {});
+    wakeLock = null;
+  }
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  if (wantWakeLock && !wakeLock) {
+    acquireWakeLock();
+  }
+  // Resync the countdown immediately (and fire the alarm if the round ended
+  // while the page was hidden) instead of waiting for the next interval tick.
+  if (timerRunning) timerTick();
+});
+
+// --- Setup persistence ---
+const STORAGE_KEY = 'pickleball-rr-setup-v1';
+let isLoadingSetup = false;
+
+function saveSetup() {
+  if (isLoadingSetup) return;
+  try {
+    const data = {
+      players: Array.from({ length: 8 }, (_, i) => document.getElementById(`p${i + 1}`).value),
+      skills: Array.from({ length: 8 }, (_, i) => document.getElementById(`sk${i + 1}`).dataset.skill),
+      mode,
+      timerMin: document.getElementById('timerMin').value,
+      timerSec: document.getElementById('timerSec').value,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch {}
+}
+
+function loadSetup() {
+  let data;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    data = JSON.parse(raw);
+  } catch { return; }
+
+  isLoadingSetup = true;
+  try {
+    if (Array.isArray(data.players)) {
+      data.players.forEach((v, i) => {
+        const el = document.getElementById(`p${i + 1}`);
+        if (el && v) el.value = v;
+      });
+    }
+    if (Array.isArray(data.skills)) {
+      data.skills.forEach((v, i) => {
+        const el = document.getElementById(`sk${i + 1}`);
+        if (el && v) el.dataset.skill = v;
+      });
+    }
+    if (data.mode) setMode(data.mode);
+    if (data.timerMin != null) document.getElementById('timerMin').value = data.timerMin;
+    if (data.timerSec != null) document.getElementById('timerSec').value = data.timerSec;
+  } finally {
+    isLoadingSetup = false;
+  }
+}
+
+document.getElementById('setup').addEventListener('input', saveSetup);
+document.getElementById('timerMin').addEventListener('input', saveSetup);
+document.getElementById('timerSec').addEventListener('input', saveSetup);
+
+// --- Init ---
+loadSetup();
+timerRemaining = getTimerInputSeconds();
+updateTimerDisplay();
+
+// Section 6: Restore session on init
+(function restoreSession() {
+  const session = loadSession();
+  if (!session) return;
+  if (!Array.isArray(session.roundsData) || session.roundsData.length === 0) return;
+
+  roundsData = session.roundsData;
+  scoresData = session.scoresData || emptyScores(roundsData);
+  courtsData = session.courtsData || getCourts();
+  currentRound = typeof session.currentRound === 'number' ? session.currentRound : 0;
+  totalRounds = typeof session.totalRounds === 'number' ? session.totalRounds : roundsData.length;
+  playersData = session.playersData || [];
+
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('printable').classList.add('active');
+  render(roundsData, playersData, courtsData);
+  buildNextRoundSelect();
+  updateRoundState();
+})();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+</script>
+
+</body>
+</html>
