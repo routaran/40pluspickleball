@@ -108,3 +108,4 @@ Thumbs.db
 # Claude AI CLI and Playwright MCP
 .antigravitycli/
 .playwright-mcp/
+.claude/
