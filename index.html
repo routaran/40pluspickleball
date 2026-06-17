@@ -5,22 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pickleball Round Robin</title>
 <style>
-  @page {
-    size: letter;
-    margin: 0.5in;
-  }
-
-  @media print {
-    .no-print { display: none !important; }
-    body { padding: 0; background: #fff; }
-    .schedule tbody tr { opacity: 1 !important; }
-    .schedule tbody tr td { background: none !important; color: #1a1a1a !important; font-size: 1.05rem !important; border-color: #1a1a1a !important; }
-    .schedule tbody tr td b { color: #1a1a1a !important; font-size: 1.05rem !important; }
-    .schedule tbody tr td .vs { color: #888 !important; }
-    .schedule tbody td { height: 1.15in; padding-top: 0 !important; padding-bottom: 0 !important; }
-    .schedule thead th { background: #1a1a1a !important; }
-  }
-
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
@@ -401,7 +385,7 @@
   <div class="back-btn-row no-print">
     <button class="btn" onclick="goBack()">Back</button>
     <button class="btn" onclick="generate()">Randomize</button>
-    <button class="btn btn-primary" onclick="window.print()">Print</button>
+    <button class="btn btn-primary" onclick="resetForm()">Reset</button>
   </div>
 
   <div class="timer-section no-print" id="timerSection">
@@ -501,6 +485,18 @@ function getCourts() {
 function goBack() {
   document.getElementById('setup').style.display = '';
   document.getElementById('printable').classList.remove('active');
+}
+
+function resetForm() {
+  for (let i = 1; i <= 8; i++) {
+    document.getElementById(`p${i}`).value = '';
+    const sk = document.getElementById(`sk${i}`);
+    sk.dataset.skill = 'green';
+  }
+  document.getElementById('court1').value = '';
+  document.getElementById('court2').value = '';
+  setMode('random');
+  goBack();
 }
 
 function generate() {
