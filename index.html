@@ -520,40 +520,7 @@
   }
   .tabbar svg { width: 24px; height: 24px; }
 
-  /* ============ Print ============ */
-  .print-only { display: none; }
 
-  @media print {
-    .no-print, .tabbar, .setup-cta, .scrim, .sheet { display: none !important; }
-    body { background: #fff; }
-    .view-pad { padding: 0; max-width: none; }
-    .screen-only { display: none !important; }
-    .print-only { display: block !important; }
-
-    .print-header { text-align: center; margin-bottom: 12px; }
-    .print-header h1 { font-size: 1.5rem; color: #000; }
-    .print-header .sub { font-size: 0.85rem; color: #444; }
-
-    .print-schedule { width: 100%; border-collapse: collapse; table-layout: fixed; }
-    .print-schedule th, .print-schedule td {
-      border: 1.5px solid #1a1a1a; padding: 4px; text-align: center;
-      vertical-align: middle; color: #1a1a1a; font-size: 1rem;
-    }
-    .print-schedule thead th { background: #1a1a1a !important; color: #fff !important;
-      -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .print-schedule thead th:first-child { width: 60px; }
-    .print-schedule tbody td { height: 1.05in; }
-    .print-schedule .p-round-label { font-weight: 800; }
-    .print-schedule .p-vs { color: #888; font-size: 0.75rem; letter-spacing: 1px; }
-    .print-schedule .p-score { font-weight: 700; font-size: 0.9rem; margin-top: 4px; }
-
-    .standings-table-wrap { border: none; border-radius: 0; overflow: visible; }
-    .scoreboard-table th, .scoreboard-table td { border: 1.5px solid #1a1a1a; color: #1a1a1a; }
-    .scoreboard-table thead th { position: static; background: #1a1a1a !important; color: #fff !important;
-      -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .scoreboard-table tbody tr:nth-child(even) td { background: #fff; }
-    .diff-pos, .diff-neg, tr.rank-top td:nth-child(2), tr.rank-top .scoreboard-rank { color: #1a1a1a; }
-  }
 </style>
 </head>
 <body>
@@ -620,14 +587,13 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
             Bonus
           </button>
-          <button type="button" class="icon-btn" onclick="window.print()" aria-label="Print schedule">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/></svg>
-            Print
+          <button type="button" class="icon-btn" onclick="resetForm()" aria-label="Reset form">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            Reset
           </button>
         </div>
       </div>
-      <div id="scheduleCards" class="screen-only"></div>
-      <div id="printSchedule" class="print-only"></div>
+      <div id="scheduleCards"></div>
     </div>
   </section>
 
@@ -663,12 +629,7 @@
     <div class="view-pad">
       <div class="view-header">
         <h2>Standings</h2>
-        <div class="header-actions no-print">
-          <button type="button" class="icon-btn" onclick="window.print()" aria-label="Print standings">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/></svg>
-            Print
-          </button>
-        </div>
+        <div class="header-actions no-print"></div>
       </div>
       <div class="standings-sub" id="scoreboardSub">0 round(s) scored</div>
       <div class="standings-table-wrap">
@@ -773,6 +734,16 @@ function goBack() {
   document.getElementById('viewSetup').classList.add('active');
   document.getElementById('setupCta').classList.add('show');
   // Session is intentionally preserved.
+}
+
+function resetForm() {
+  for (let i = 1; i <= 8; i++) {
+    document.getElementById(`p${i}`).value = '';
+    document.getElementById(`sk${i}`).dataset.skill = 'green';
+  }
+  setMode('random');
+  try { localStorage.removeItem(STORAGE_KEY); } catch {}
+  goBack();
 }
 
 /* ============ Setup ============ */
@@ -1128,48 +1099,6 @@ function renderSchedule() {
       </div>`;
   });
   cardsEl.innerHTML = html;
-
-  renderPrintSchedule();
-}
-
-function renderPrintSchedule() {
-  const courts = courtsData;
-  const hdr0 = courts[0] ? `Court ${esc(courts[0])}` : 'Court 1';
-  const hdr1 = courts[1] ? `Court ${esc(courts[1])}` : 'Court 2';
-
-  const cell = (m) =>
-    `<b>${esc(m.team1[0])}</b> &amp; <b>${esc(m.team1[1])}</b><br>` +
-    `<span class="p-vs">vs</span><br>` +
-    `<b>${esc(m.team2[0])}</b> &amp; <b>${esc(m.team2[1])}</b>`;
-
-  let html = `
-    <div class="print-header">
-      <h1>Pickleball Round Robin</h1>
-      <div class="sub">Courts ${esc(courts[0] || 'A')} &amp; ${esc(courts[1] || 'B')}</div>
-    </div>
-    <table class="print-schedule">
-      <thead>
-        <tr><th></th><th>${hdr0}</th><th>${hdr1}</th></tr>
-      </thead>
-      <tbody>`;
-
-  roundsData.forEach((round, i) => {
-    const m0 = round[0] || null;
-    const m1 = round[1] || null;
-    const scoreHtml = (r, c) => {
-      if (scoresData[r] && scoresData[r][c] && scoresData[r][c].team1 !== null) {
-        const s = scoresData[r][c];
-        return `<div class="p-score">${s.team1}&ndash;${s.team2}</div>`;
-      }
-      return '';
-    };
-    const cell0 = m0 ? `<td>${cell(m0)}${scoreHtml(i, 0)}</td>` : `<td>&mdash;</td>`;
-    const cell1 = m1 ? `<td>${cell(m1)}${scoreHtml(i, 1)}</td>` : `<td>&mdash;</td>`;
-    html += `<tr><td class="p-round-label">${roundLabel(i)}</td>${cell0}${cell1}</tr>`;
-  });
-
-  html += `</tbody></table>`;
-  document.getElementById('printSchedule').innerHTML = html;
 }
 
 function scrollActiveCardIntoView() {
