@@ -520,6 +520,59 @@
   }
   .tabbar svg { width: 24px; height: 24px; }
 
+  /* ============ Overall tab extras ============ */
+  .overall-empty {
+    text-align: center; color: var(--muted-fg); font-size: 0.9rem;
+    padding: 28px 14px; line-height: 1.55;
+  }
+  .save-hint { font-size: 0.78rem; color: var(--muted-fg); margin-top: 12px; line-height: 1.45; }
+
+  /* ============ Autocomplete ============ */
+  .ac-menu {
+    position: absolute; z-index: 60;
+    background: var(--card); border: 1.5px solid var(--border);
+    border-radius: 12px; box-shadow: 0 8px 24px rgba(15,23,42,0.18);
+    max-height: 240px; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    display: none;
+  }
+  .ac-menu.open { display: block; }
+  .ac-item {
+    display: flex; align-items: center; gap: 10px;
+    min-height: 44px; padding: 8px 14px;
+    font-size: 0.95rem; font-weight: 600; color: var(--fg);
+    cursor: pointer; border-bottom: 1px solid var(--border);
+  }
+  .ac-item:last-child { border-bottom: none; }
+  .ac-item.active, .ac-item:hover { background: var(--muted); }
+  .ac-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; background: var(--border); }
+  .ac-dot.green { background: var(--sk-green); }
+  .ac-dot.blue { background: var(--sk-blue); }
+  .ac-dot.orange { background: var(--sk-orange); }
+  .ac-dot.red { background: var(--sk-red); }
+  .ac-stat { margin-left: auto; font-size: 0.74rem; font-weight: 600; color: var(--muted-fg); }
+
+  /* ============ Toast ============ */
+  .toast {
+    position: fixed; left: 50%; bottom: calc(var(--tabbar-h) + 18px + env(safe-area-inset-bottom));
+    transform: translateX(-50%) translateY(12px);
+    background: var(--fg); color: #fff; font-size: 0.9rem; font-weight: 600;
+    padding: 12px 18px; border-radius: 999px; box-shadow: 0 8px 24px rgba(15,23,42,0.28);
+    z-index: 80; opacity: 0; pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    max-width: 90vw; text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ============ Import / export sheet ============ */
+  .io-textarea {
+    width: 100%; min-height: 120px; padding: 12px 14px;
+    border: 1.5px solid var(--border); border-radius: 12px; background: var(--muted);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.82rem;
+    line-height: 1.4; resize: vertical; color: var(--fg); word-break: break-all;
+  }
+  .io-textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
+  .io-help { font-size: 0.82rem; color: var(--muted-fg); margin: 4px 0 12px; line-height: 1.45; }
+
 
 </style>
 </head>
@@ -651,6 +704,47 @@
     </div>
   </section>
 
+  <!-- Overall tab -->
+  <section class="tab-view" id="tabOverall">
+    <div class="view-pad">
+      <div class="view-header">
+        <h2>Overall</h2>
+        <div class="header-actions no-print">
+          <button type="button" class="icon-btn" onclick="exportData()" aria-label="Export data">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17V3"/><path d="m6 9 6-6 6 6"/><path d="M5 21h14"/></svg>
+            Export
+          </button>
+          <button type="button" class="icon-btn" onclick="openImportPanel()" aria-label="Import data">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v14"/><path d="m6 11 6 6 6-6"/><path d="M5 21h14"/></svg>
+            Import
+          </button>
+        </div>
+      </div>
+      <div class="standings-sub" id="overallSub">All-time standings</div>
+      <button type="button" class="btn btn-accent btn-block" id="saveOverallBtn" onclick="saveToOverall()" style="margin-bottom:14px;">Save Today's Results to Overall</button>
+      <div class="standings-table-wrap" id="overallTableWrap">
+        <table class="scoreboard-table" id="overallTable">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Player</th>
+              <th>W</th>
+              <th>L</th>
+              <th>PF</th>
+              <th>PA</th>
+              <th>+/- Diff</th>
+            </tr>
+          </thead>
+          <tbody id="overallBody"></tbody>
+        </table>
+      </div>
+      <div class="overall-empty" id="overallEmpty" style="display:none;">
+        No overall standings yet.<br>Finish a day and tap &ldquo;Save Today's Results to Overall&rdquo;, or Import a teammate's data.
+      </div>
+      <div class="save-hint">Overall standings are stored only in this browser. Use Export / Import to move data between devices or people.</div>
+    </div>
+  </section>
+
 </div>
 
 <!-- ============ TAB BAR ============ -->
@@ -666,6 +760,10 @@
   <button type="button" id="tabBtnStandings" onclick="switchTab('standings')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M6 3h12v6a6 6 0 0 1-12 0Z"/><path d="M6 5H3v2a4 4 0 0 0 3 3.87"/><path d="M18 5h3v2a4 4 0 0 1-3 3.87"/></svg>
     Standings
+  </button>
+  <button type="button" id="tabBtnOverall" onclick="switchTab('overall')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="6" rx="0.5"/><rect x="12" y="7" width="3" height="10" rx="0.5"/><rect x="17" y="4" width="3" height="13" rx="0.5"/></svg>
+    Overall
   </button>
 </nav>
 
@@ -692,6 +790,29 @@
   </div>
 </div>
 
+<div class="sheet no-print" id="importSheet" role="dialog" aria-modal="true" aria-label="Import data">
+  <div class="sheet-handle"></div>
+  <h3>Import Data</h3>
+  <div class="io-help">Paste the data string a teammate sent you. Their day's results will be <b>added</b> to your Overall standings (players are matched by name; new ones are added).</div>
+  <textarea class="io-textarea" id="importText" placeholder="Paste exported data here&hellip;" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></textarea>
+  <div class="inline-error" id="importError"></div>
+  <div class="sheet-btns">
+    <button type="button" class="btn btn-accent" onclick="confirmImport()">Import &amp; Merge</button>
+    <button type="button" class="btn btn-ghost" onclick="closeSheets()">Cancel</button>
+  </div>
+</div>
+
+<div class="sheet no-print" id="exportSheet" role="dialog" aria-modal="true" aria-label="Export data">
+  <div class="sheet-handle"></div>
+  <h3>Export Data</h3>
+  <div class="io-help" id="exportHelp">Copy this and text or message it to whoever keeps the standings.</div>
+  <textarea class="io-textarea" id="exportText" readonly spellcheck="false" onclick="this.select()"></textarea>
+  <div class="sheet-btns">
+    <button type="button" class="btn btn-primary" onclick="copyExport()">Copy to Clipboard</button>
+    <button type="button" class="btn btn-ghost" onclick="closeSheets()">Done</button>
+  </div>
+</div>
+
 <script>
 let mode = 'random';
 let currentRound = 0; // 0-indexed
@@ -700,6 +821,8 @@ let roundsData = [];   // stored after generate
 let courtsData = [];
 let scoresData = [];   // parallel to roundsData: scoresData[r][c] = { team1, team2 } | null entries
 let playersData = [];  // snapshot of player names at generate time
+let skillsData = [];   // snapshot of player skills at generate time (parallel to playersData)
+let sessionId = null;  // unique id for the current day's session (for overall reconcile/export)
 let scoreSheetMode = 'advance';
 let scoreSheetRound = -1;
 
@@ -717,13 +840,14 @@ function showShell() {
 
 function switchTab(name) {
   activeTab = name;
-  const tabs = { schedule: 'tabSchedule', timer: 'tabTimer', standings: 'tabStandings' };
+  const tabs = { schedule: 'tabSchedule', timer: 'tabTimer', standings: 'tabStandings', overall: 'tabOverall' };
   for (const key of Object.keys(tabs)) {
     document.getElementById(tabs[key]).classList.toggle('active', key === name);
     document.getElementById('tabBtn' + key.charAt(0).toUpperCase() + key.slice(1))
       .classList.toggle('active', key === name);
   }
   if (name === 'standings') refreshScoreboard();
+  if (name === 'overall') refreshOverall();
   if (name === 'schedule') scrollActiveCardIntoView();
   window.scrollTo({ top: 0, behavior: 'auto' });
 }
@@ -786,6 +910,113 @@ function toggleSkill(btn) {
   }
 })();
 
+/* ============ Player name autocomplete (roster-backed) ============ */
+let acInput = null;   // currently active player input
+let acIndex = -1;     // highlighted item index
+
+function acMenuEl() {
+  let menu = document.getElementById('acMenu');
+  if (!menu) {
+    menu = document.createElement('div');
+    menu.id = 'acMenu';
+    menu.className = 'ac-menu';
+    document.body.appendChild(menu);
+  }
+  return menu;
+}
+
+function acClose() {
+  const menu = acMenuEl();
+  menu.classList.remove('open');
+  menu.innerHTML = '';
+  acInput = null;
+  acIndex = -1;
+}
+
+function acPosition(input) {
+  const menu = acMenuEl();
+  const r = input.getBoundingClientRect();
+  menu.style.left = (r.left + window.scrollX) + 'px';
+  menu.style.top = (r.bottom + window.scrollY + 4) + 'px';
+  menu.style.width = r.width + 'px';
+}
+
+function acRosterList() {
+  const roster = loadRoster();
+  return Object.values(roster.players)
+    .map(p => ({ name: p.name, skill: p.skill || 'green', games: (p.gw || 0) + (p.gl || 0) }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function acOpenFor(input) {
+  acInput = input;
+  const q = input.value.trim().toLowerCase();
+  const items = acRosterList()
+    .filter(p => p.name.toLowerCase().includes(q))
+    .filter(p => p.name.toLowerCase() !== q) // exact match: nothing useful to pick
+    .slice(0, 30);
+  const menu = acMenuEl();
+  if (!items.length) { acClose(); return; }
+  acInput = input;
+  acIndex = -1;
+  menu.innerHTML = items.map((p, i) =>
+    `<div class="ac-item" data-i="${i}" data-name="${esc(p.name)}" data-skill="${esc(p.skill)}">
+       <span class="ac-dot ${esc(p.skill)}"></span>
+       <span>${esc(p.name)}</span>
+       <span class="ac-stat">${p.games} GP</span>
+     </div>`
+  ).join('');
+  menu.querySelectorAll('.ac-item').forEach(it => {
+    // mousedown fires before the input's blur, so the pick isn't cancelled
+    it.addEventListener('mousedown', e => {
+      e.preventDefault();
+      acPick(input, it.dataset.name, it.dataset.skill);
+    });
+  });
+  acPosition(input);
+  menu.classList.add('open');
+}
+
+function acPick(input, name, skill) {
+  input.value = name;
+  const idx = input.id.replace('p', '');
+  const sk = document.getElementById('sk' + idx);
+  if (sk && skill) sk.dataset.skill = skill;
+  acClose();
+  saveSetup();
+  input.focus();
+}
+
+function acHighlight(items) {
+  items.forEach((it, i) => it.classList.toggle('active', i === acIndex));
+  if (acIndex >= 0 && items[acIndex]) items[acIndex].scrollIntoView({ block: 'nearest' });
+}
+
+function setupAutocomplete() {
+  for (let i = 1; i <= 8; i++) {
+    const input = document.getElementById('p' + i);
+    if (!input) continue;
+    input.addEventListener('focus', () => acOpenFor(input));
+    input.addEventListener('input', () => acOpenFor(input));
+    input.addEventListener('keydown', e => {
+      const menu = acMenuEl();
+      if (!menu.classList.contains('open')) return;
+      const items = menu.querySelectorAll('.ac-item');
+      if (!items.length) return;
+      if (e.key === 'ArrowDown') { e.preventDefault(); acIndex = Math.min(acIndex + 1, items.length - 1); acHighlight(items); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); acIndex = Math.max(acIndex - 1, 0); acHighlight(items); }
+      else if (e.key === 'Enter' && acIndex >= 0) { e.preventDefault(); const it = items[acIndex]; acPick(input, it.dataset.name, it.dataset.skill); }
+      else if (e.key === 'Escape') { acClose(); }
+    });
+    input.addEventListener('blur', () => setTimeout(() => { if (acInput === input) acClose(); }, 150));
+  }
+  window.addEventListener('scroll', () => { if (acInput) acPosition(acInput); }, true);
+  window.addEventListener('resize', () => { if (acInput) acPosition(acInput); });
+  document.addEventListener('click', e => {
+    if (acInput && e.target !== acInput && !acMenuEl().contains(e.target)) acClose();
+  });
+}
+
 function shuffle(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -821,6 +1052,8 @@ function generate() {
   const skills = getSkills();
   courtsData = courts;
   playersData = players;
+  skillsData = skills;
+  sessionId = newSessionId();
   roundsData = buildSchedule(players, skills);
   scoresData = emptyScores(roundsData);
   totalRounds = 7;
@@ -1148,7 +1381,8 @@ function updateRoundState(autoScroll = true) {
         <div class="cb-title">Tournament Complete</div>
         <div class="cb-sub">All ${totalRounds} rounds played. Great games out there.</div>
         <div class="complete-cta">
-          <button type="button" class="btn btn-on-grad" onclick="switchTab('standings')">View Scoreboard</button>
+          <button type="button" class="btn btn-on-grad" onclick="saveToOverall()">Save to Overall</button>
+          <button type="button" class="btn btn-on-grad-ghost" onclick="switchTab('standings')">View Scoreboard</button>
           <button type="button" class="btn btn-on-grad-ghost" onclick="openBonusPanel()">Add Bonus Round</button>
         </div>
       </div>`;
@@ -1309,8 +1543,7 @@ function openSheet(id) {
 
 function closeSheets() {
   document.getElementById('sheetScrim').classList.remove('open');
-  document.getElementById('scoreSheet').classList.remove('open');
-  document.getElementById('bonusSheet').classList.remove('open');
+  document.querySelectorAll('.sheet').forEach(s => s.classList.remove('open'));
 }
 
 function scrimTap() {
@@ -1318,7 +1551,7 @@ function scrimTap() {
   if (document.getElementById('scoreSheet').classList.contains('open')) {
     scoreCancel();
   } else {
-    closeBonusPanel();
+    closeSheets();
   }
 }
 
@@ -1546,6 +1779,287 @@ function refreshScoreboard() {
   }).join('');
 }
 
+/* ============ Toast ============ */
+let toastTimer = null;
+function toast(msg) {
+  let el = document.getElementById('toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'toast';
+    el.className = 'toast';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  void el.offsetWidth; // reflow so the transition replays
+  el.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+/* ============ Session id ============ */
+function newSessionId() {
+  return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
+}
+
+/* ============ Persistent roster (overall standings) ============ */
+const ROSTER_KEY = 'pickleball-rr-roster-v1';
+const PLACEHOLDER_RE = /^player\s*\d+$/i;
+const VALID_SKILLS = ['green', 'blue', 'orange', 'red'];
+
+function emptyRoster() {
+  return { v: 1, players: {}, applied: {} };
+}
+
+function loadRoster() {
+  try {
+    const raw = localStorage.getItem(ROSTER_KEY);
+    if (!raw) return emptyRoster();
+    const data = JSON.parse(raw);
+    if (!data || typeof data !== 'object') return emptyRoster();
+    return {
+      v: 1,
+      players: (data.players && typeof data.players === 'object') ? data.players : {},
+      applied: (data.applied && typeof data.applied === 'object') ? data.applied : {},
+    };
+  } catch {
+    return emptyRoster();
+  }
+}
+
+function saveRoster(roster) {
+  try { localStorage.setItem(ROSTER_KEY, JSON.stringify(roster)); } catch {}
+}
+
+function nameKey(name) {
+  return String(name).trim().toLowerCase();
+}
+
+function isRealName(name) {
+  const t = String(name == null ? '' : name).trim();
+  return t.length > 0 && !PLACEHOLDER_RE.test(t);
+}
+
+// Build today's per-player deltas (gw/gl/pw/pl) keyed by normalized name,
+// plus a name+skill meta map. Placeholder/blank/unscored players are dropped.
+function getSessionDeltas() {
+  const standings = computeStandings();
+  const skillByIndex = (skillsData && skillsData.length) ? skillsData : getSkills();
+  const skillByKey = {};
+  playersData.forEach((nm, i) => {
+    if (isRealName(nm)) skillByKey[nameKey(nm)] = skillByIndex[i] || 'green';
+  });
+  const deltas = {};
+  const meta = {};
+  for (const row of standings) {
+    if (!isRealName(row.name) || row.games === 0) continue;
+    const k = nameKey(row.name);
+    deltas[k] = { gw: row.wins, gl: row.losses, pw: row.pf, pl: row.pa };
+    meta[k] = { name: row.name.trim(), skill: skillByKey[k] || 'green' };
+  }
+  return { deltas, meta };
+}
+
+// Reconcile a session's deltas into the roster: roster += (new - previouslyApplied[id]).
+// Idempotent — re-applying the same id corrects totals rather than double-counting.
+function applySession(roster, id, deltas, meta) {
+  if (!id) id = 'anon-' + newSessionId();
+  const prev = roster.applied[id] || {};
+  const keys = new Set([...Object.keys(prev), ...Object.keys(deltas)]);
+  for (const k of keys) {
+    const n = deltas[k] || { gw: 0, gl: 0, pw: 0, pl: 0 };
+    const p = prev[k] || { gw: 0, gl: 0, pw: 0, pl: 0 };
+    let player = roster.players[k];
+    if (!player) {
+      player = { name: (meta[k] && meta[k].name) || k, skill: (meta[k] && meta[k].skill) || 'green', gw: 0, gl: 0, pw: 0, pl: 0 };
+      roster.players[k] = player;
+    }
+    player.gw += (n.gw || 0) - (p.gw || 0);
+    player.gl += (n.gl || 0) - (p.gl || 0);
+    player.pw += (n.pw || 0) - (p.pw || 0);
+    player.pl += (n.pl || 0) - (p.pl || 0);
+    if (meta[k]) {
+      player.name = meta[k].name;
+      if (meta[k].skill) player.skill = meta[k].skill;
+    }
+    // Remove anyone who nets back to nothing (e.g. an undone import).
+    if (player.gw <= 0 && player.gl <= 0 && player.pw <= 0 && player.pl <= 0) {
+      delete roster.players[k];
+    }
+  }
+  if (Object.keys(deltas).length) roster.applied[id] = deltas;
+  else delete roster.applied[id];
+  return roster;
+}
+
+function saveToOverall() {
+  if (!roundsData.length) { toast('Generate a schedule first.'); return; }
+  const { deltas, meta } = getSessionDeltas();
+  if (!Object.keys(deltas).length) { toast('No scored games to save yet.'); return; }
+  const roster = loadRoster();
+  applySession(roster, sessionId, deltas, meta);
+  saveRoster(roster);
+  refreshOverall();
+  toast("Saved today's results to Overall.");
+}
+
+function overallStandings(roster) {
+  return Object.values(roster.players).map(p => {
+    const games = (p.gw || 0) + (p.gl || 0);
+    const avg = games ? ((p.pw || 0) - (p.pl || 0)) / games : 0;
+    return { name: p.name, skill: p.skill, wins: p.gw || 0, losses: p.gl || 0, pf: p.pw || 0, pa: p.pl || 0, games, avg };
+  }).sort((a, b) => {
+    if (b.wins !== a.wins) return b.wins - a.wins;
+    if (b.avg !== a.avg) return b.avg - a.avg;
+    return b.pf - a.pf;
+  });
+}
+
+function refreshOverall() {
+  const roster = loadRoster();
+  const standings = overallStandings(roster);
+  const tbody = document.getElementById('overallBody');
+  const sub = document.getElementById('overallSub');
+  const empty = document.getElementById('overallEmpty');
+  const wrap = document.getElementById('overallTableWrap');
+
+  if (!standings.length) {
+    tbody.innerHTML = '';
+    wrap.style.display = 'none';
+    empty.style.display = 'block';
+    sub.textContent = 'All-time standings';
+    return;
+  }
+  wrap.style.display = '';
+  empty.style.display = 'none';
+  sub.textContent = `${standings.length} player(s) · all-time`;
+
+  tbody.innerHTML = standings.map((row, i) => {
+    const diffClass = row.avg >= 0 ? 'diff-pos' : 'diff-neg';
+    const topClass = i < 3 ? ' class="rank-top"' : '';
+    return `<tr${topClass}>
+      <td class="scoreboard-rank">${i + 1}</td>
+      <td>${esc(row.name)}</td>
+      <td>${row.wins}</td>
+      <td>${row.losses}</td>
+      <td>${row.pf}</td>
+      <td>${row.pa}</td>
+      <td class="${diffClass}">${formatAvgDiff(row.avg)}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ============ Export / Import ============ */
+function todayStr() {
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+function buildExportBundle() {
+  const { deltas, meta } = getSessionDeltas();
+  const p = Object.keys(deltas).map(k => ({
+    n: meta[k].name, s: meta[k].skill,
+    gw: deltas[k].gw, gl: deltas[k].gl, pw: deltas[k].pw, pl: deltas[k].pl,
+  }));
+  return { t: 'pkbl-rr', v: 1, id: sessionId || ('anon-' + newSessionId()), d: todayStr(), p };
+}
+
+function exportData() {
+  if (!roundsData.length) { toast('Nothing to export yet — run a day first.'); return; }
+  const bundle = buildExportBundle();
+  if (!bundle.p.length) { toast('No scored games to export yet.'); return; }
+  const str = JSON.stringify(bundle);
+  document.getElementById('exportText').value = str;
+  const help = document.getElementById('exportHelp');
+  openSheet('exportSheet');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(str)
+      .then(() => { help.textContent = 'Copied to your clipboard — text or message it to whoever keeps the standings. The full string is below too.'; })
+      .catch(() => { help.textContent = 'Select the text below, copy it, then text or message it to whoever keeps the standings.'; });
+  } else {
+    help.textContent = 'Select the text below, copy it, then text or message it to whoever keeps the standings.';
+  }
+}
+
+function copyExport() {
+  const ta = document.getElementById('exportText');
+  ta.focus();
+  ta.select();
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(ta.value)
+      .then(() => toast('Copied to clipboard.'))
+      .catch(() => fallbackCopy(ta));
+  } else {
+    fallbackCopy(ta);
+  }
+}
+
+function fallbackCopy(ta) {
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch { ok = false; }
+  toast(ok ? 'Copied to clipboard.' : 'Select the text and copy manually.');
+}
+
+function openImportPanel() {
+  document.getElementById('importText').value = '';
+  const err = document.getElementById('importError');
+  err.style.display = 'none';
+  err.textContent = '';
+  openSheet('importSheet');
+}
+
+function confirmImport() {
+  const err = document.getElementById('importError');
+  err.style.display = 'none';
+  err.textContent = '';
+  const raw = document.getElementById('importText').value.trim();
+  if (!raw) { err.textContent = 'Paste the exported data string first.'; err.style.display = 'block'; return; }
+
+  let bundle;
+  try { bundle = JSON.parse(raw); }
+  catch {
+    err.textContent = "That doesn't look like valid data. Paste the full string you were sent.";
+    err.style.display = 'block';
+    return;
+  }
+  if (!bundle || bundle.t !== 'pkbl-rr' || !Array.isArray(bundle.p)) {
+    err.textContent = 'Unrecognized data format. Make sure you pasted a Pickleball RR export.';
+    err.style.display = 'block';
+    return;
+  }
+
+  const deltas = {};
+  const meta = {};
+  for (const row of bundle.p) {
+    if (!row || !isRealName(row.n)) continue;
+    const k = nameKey(row.n);
+    deltas[k] = {
+      gw: Math.max(0, parseInt(row.gw, 10) || 0),
+      gl: Math.max(0, parseInt(row.gl, 10) || 0),
+      pw: Math.max(0, parseInt(row.pw, 10) || 0),
+      pl: Math.max(0, parseInt(row.pl, 10) || 0),
+    };
+    meta[k] = { name: String(row.n).trim(), skill: VALID_SKILLS.includes(row.s) ? row.s : 'green' };
+  }
+  if (!Object.keys(deltas).length) {
+    err.textContent = 'No players found in that data.';
+    err.style.display = 'block';
+    return;
+  }
+
+  const id = bundle.id || ('import-' + (bundle.d || todayStr()));
+  const roster = loadRoster();
+  const isReimport = !!roster.applied[id];
+  applySession(roster, id, deltas, meta);
+  saveRoster(roster);
+  closeSheets();
+  refreshOverall();
+  switchTab('overall');
+  toast(isReimport
+    ? 'Already had that day — Overall standings updated.'
+    : `Imported ${Object.keys(deltas).length} player(s) into Overall.`);
+}
+
 /* ============ Bonus round ============ */
 let bonusActiveCourts = 1;
 
@@ -1701,6 +2215,8 @@ function saveSession() {
       currentRound,
       totalRounds,
       playersData,
+      skillsData,
+      sessionId,
     };
     localStorage.setItem(SESSION_KEY, JSON.stringify(data));
   } catch {}
@@ -1835,6 +2351,7 @@ document.getElementById('timerSec').addEventListener('input', saveSetup);
 
 /* ============ Init ============ */
 loadSetup();
+setupAutocomplete();
 timerRemaining = getTimerInputSeconds();
 updateTimerDisplay();
 
@@ -1850,6 +2367,8 @@ updateTimerDisplay();
   currentRound = typeof session.currentRound === 'number' ? session.currentRound : 0;
   totalRounds = typeof session.totalRounds === 'number' ? session.totalRounds : roundsData.length;
   playersData = session.playersData || [];
+  skillsData = session.skillsData || [];
+  sessionId = session.sessionId || newSessionId();
 
   showShell();
   renderSchedule();
