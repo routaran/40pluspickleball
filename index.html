@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#2563EB">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -39,6 +39,7 @@
     --font-body: 'Barlow', system-ui, -apple-system, sans-serif;
     --font-display: 'Barlow Condensed', 'Barlow', system-ui, sans-serif;
     --tabbar-h: 64px;
+    --statusbar-h: env(safe-area-inset-top, 0px);
   }
 
   @page { size: letter; margin: 0.5in; }
@@ -52,7 +53,17 @@
     color: var(--fg);
     background: var(--bg);
     min-height: 100vh;
+    padding-top: var(--statusbar-h);
     -webkit-font-smoothing: antialiased;
+  }
+
+  /* Opaque strip behind the OS status bar so its (white) text stays legible
+     and content never renders under it. Height tracks the safe-area inset. */
+  .statusbar-cover {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: var(--statusbar-h);
+    background: #000;
+    z-index: 90;
   }
 
   button {
@@ -481,7 +492,7 @@
     text-align: center; border-bottom: 1px solid var(--border);
   }
   .scoreboard-table thead th {
-    position: sticky; top: 0; z-index: 1;
+    position: sticky; top: var(--statusbar-h); z-index: 1;
     background: var(--primary); color: #fff; font-weight: 700;
     font-size: clamp(0.72rem, 2.2vw, 0.85rem);
     text-transform: uppercase; letter-spacing: 0.5px;
@@ -577,6 +588,8 @@
 </style>
 </head>
 <body>
+
+<div class="statusbar-cover no-print"></div>
 
 <!-- ============ SETUP VIEW ============ -->
 <div id="viewSetup" class="active no-print">
